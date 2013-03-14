@@ -7,6 +7,7 @@
 # Created:     14.03.2013
 # Copyright:   (c) 11 2013
 # Licence:     <your licence>
+# Jean Gorbunov
 #-------------------------------------------------------------------------------
 import os
 os.chdir('C:/')
