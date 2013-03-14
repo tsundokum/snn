@@ -1,4 +1,0 @@
-snn
-===
-
-Semantic Neural Network
