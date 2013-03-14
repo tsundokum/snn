@@ -25,6 +25,7 @@ def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
     hidden_2: Structure of the second subnetwork
     relation_in_size: Relations number
     output_size: Number of properties
+    num_lay_1, num_lay_2: What is it?
     epsilon: Limitation of  initial eights
     '''
     # First subnetwork
@@ -52,7 +53,7 @@ def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
 
 
 def sigmoid(z):
-    '''Compute sigmoid function.'''
+    '''Compute sigmoid function. alfa koefficient is noting? '''
     g = 1.0 / (1.0+numpy.exp(-z));
     return g
 
