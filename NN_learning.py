@@ -16,14 +16,14 @@ import neural_network
 
 # Parameters:
 input_size = 3  # Item number
-hidden_1 = (3, 2)  # Struscture of the first subnetwork
+hidden_1 = (3, 2)  # Structure of the first subnetwork
 relation_in_size = 3  # Relations number
 hidden_2 = (3, 2)  # Structure of the second subnetwork
 output_size = 3  # Number of properties
 epsilon = 0.5  # Limitation of  initial eights
 alpha = 0.1  # Learning rate
 R = 0.0  # Coefficient of regularization
-e = 1e-4  # value of weights cahanging in the gradien check function
+e = 1e-4  # value of weights changing in the gradient check function
 number_of_epochs = 3
 number_of_batches = 8
 
@@ -40,14 +40,14 @@ X = np.arange(input_size * m).reshape(m, input_size)
 input_relation = np.arange(relation_in_size * m).reshape(m, relation_in_size)
 Y = np.ones((m * output_size))
 for l in range(m * output_size):
-    Y[l] = np.random.choice([0,1])
+    Y[l] = np.random.choice([0, 1])
 Y = Y.reshape(m, output_size)
 
 
 # Usefull veriables:
-m = len(X) # Batch size
-num_lay_1 = len(hidden_1) # Number of layers in the first subnetwork
-num_lay_2 = len(hidden_2) # Number of layers in the second subnetwork
+m = len(X)                          # Batch size
+num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
+num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
 J = np.arange(number_of_epochs * number_of_batches, dtype=float). \
         reshape(number_of_epochs, number_of_batches)  # this list will contain log of errors
 
@@ -70,11 +70,11 @@ J = np.arange(number_of_epochs * number_of_batches, dtype=float). \
 [theta_1, theta_2, theta_relation] = neural_network.initialise_weights(input_size, hidden_1,
         hidden_2, relation_in_size, output_size, num_lay_1, num_lay_2, epsilon)
 
-for epoch in range(number_of_epochs): # Beginning of epoch loop
+for epoch in range(number_of_epochs):  # Beginning of epoch loop
 
-    for batch in range(number_of_batches): # Beginning of batch loop
+    for batch in range(number_of_batches):  # Beginning of batch loop
 
-        # Compute activations of every unit in the ntework.
+        # Compute activations of every unit in the network.
         [a_1, a_2] = neural_network.forward_propagation(m, num_lay_1, num_lay_2,
                 X, input_relation, theta_1, theta_2, theta_relation)
 
