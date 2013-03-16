@@ -1,0 +1,4 @@
+ISA
+is
+can
+has
