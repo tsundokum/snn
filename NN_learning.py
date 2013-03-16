@@ -50,8 +50,8 @@ Y = Y.reshape(m, output_size)
 m = len(X)                          # Batch size
 num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
 num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
-J = np.arange(number_of_epochs * number_of_batches, dtype=float). \
-        reshape(number_of_epochs, number_of_batches)  # this list will contain log of errors
+J = np.arange(number_of_epochs * number_of_batches, dtype=float)\
+    .reshape(number_of_epochs, number_of_batches)  # this list will contain log of errors
 
 # Data division (optional):
 # ...
@@ -69,8 +69,8 @@ J = np.arange(number_of_epochs * number_of_batches, dtype=float). \
 
 
 #  Create 3 sets of matrices of initial weights according to the given structure.
-[theta_1, theta_2, theta_relation] = neural_network.initialise_weights(input_size, hidden_1,
-        hidden_2, relation_in_size, output_size, num_lay_1, num_lay_2, epsilon)
+[theta_1, theta_2, theta_relation] = neural_network.initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
+                                                                       output_size, num_lay_1, num_lay_2, epsilon)
 
 for epoch in range(number_of_epochs):  # Beginning of epoch loop
 
@@ -78,16 +78,16 @@ for epoch in range(number_of_epochs):  # Beginning of epoch loop
 
         # Compute activations of every unit in the network.
         [a_1, a_2] = neural_network.forward_propagation(m, num_lay_1, num_lay_2,
-                X, input_relation, theta_1, theta_2, theta_relation)
+                                                        X, input_relation, theta_1, theta_2, theta_relation)
 
         # Compute average error with regularization.
-        J[epoch, batch] = neural_network.compute_cost_function(m, a_2, theta_1, theta_2,
-                theta_relation, num_lay_1, num_lay_2, R, Y)
+        J[epoch, batch] = neural_network.compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
+                                                               num_lay_1, num_lay_2, R, Y)
 
         # Compute derivative of the cost function with respect to matrices theta.
-        [grad_reg_1, grad_reg_2, rel_grad_reg] = neural_network.back_propagation(m,
-                a_1, a_2, input_relation, theta_1, theta_2, theta_relation,
-                num_lay_1, num_lay_2, R, Y)
+        [grad_reg_1, grad_reg_2, rel_grad_reg] = neural_network.back_propagation(m, a_1, a_2, input_relation,
+                                                                                 theta_1, theta_2, theta_relation,
+                                                                                 num_lay_1, num_lay_2, R, Y)
 
         # # Computes the numerical gradient of the function around theta for every weight (optional).
         # [numgrad_1, numgrad_2, numgrad_rel] = neural_network.gradient_check(e,
@@ -95,9 +95,9 @@ for epoch in range(number_of_epochs):  # Beginning of epoch loop
         #         num_lay_1, num_lay_2, R)
 
         # Change matrices of weights according to the gradient.
-        [theta_1_temp, theta_2_temp, theta_relation_temp] = \
-                neural_network.descent(theta_1, theta_2, theta_relation,
-                grad_reg_1, grad_reg_2, rel_grad_reg, num_lay_1, num_lay_2, alpha)
+        [theta_1_temp, theta_2_temp, theta_relation_temp] = neural_network.descent(theta_1, theta_2, theta_relation,
+                                                                                   grad_reg_1, grad_reg_2, rel_grad_reg,
+                                                                                   num_lay_1, num_lay_2, alpha)
 
         # Update current weight matrices
         theta_1 = theta_1_temp
