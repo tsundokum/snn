@@ -1,100 +1,51 @@
 #-------------------------------------------------------------------------------
 # Name:        neural_network
-# Purpose:
+# Purpose:     Contains functions to create and learn MCLelland's neural network.
+
 #
-# Author:      11
+# Author:      Ilya Pershin
 #
 # Created:     08.03.2013
 # Copyright:   (c) 11 2013
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 '''
-...
+Contains functions to create and learn MCLelland's neural network.
+
+Changeable parameters:
+    ----
+    input_size: item number (integer)
+    hidden_1: struscture of the first subnetwork (list of integers)
+    hidden_2: structure of the second subnetwork (list of integers)
+    relation_in_size: number of input relations (integer)
+    output_size: number of properties (integer)
+    epsilon: limitation of  initial eights (float)
+    R: coefficient of regularization (float)
+    alpha: learning rate (float)
+    e: value of weights cahanging in the gradien check function(float)
+
+Data:
+    ----
+    X: input training set for items (numpy.ndarray; rows: training examples;
+            columns: dimensions)
+    input_relation: input training set for relations (numpy.ndarray;
+            rows: training examples; columns: dimensions)
+    Y: output training set for properties (numpy.ndarray; rows:
+            training examples; columns: dimensions)
+
+Usefull variables:
+    ----
+    m: number of examples in the training set
+    num_lay_1: number of layers in the first subnetwork
+    num_lay_2: number of layers in the second subnetwork
 '''
+
 import numpy
 
-def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
-         output_size, num_lay_1, num_lay_2, epsilon):
-    '''
-    Generate 3 sets of matrices of initial weights according to the given structure.
-
-    Parameters
-    ----
-    input_size: Item number
-    hidden_1: Struscture of the first subnetwork
-    hidden_2: Structure of the second subnetwork
-    relation_in_size: Relations number
-    output_size: Number of properties
-    num_lay_1, num_lay_2: What is it?
-    epsilon: Limitation of  initial eights
-    '''
-    # First subnetwork
-    w_struct_1 = numpy.hstack((input_size, hidden_1)) # Append input vector as the first layer
-    theta_1 = range(num_lay_1)
-    for i in range(num_lay_1):
-        rand_sign = numpy.random.randint(-1, 2, (w_struct_1[i] + 1,
-                w_struct_1[i + 1])) # Matrix for sign randomisation
-        theta_1[i] = numpy.random.rand(w_struct_1[i] + 1, w_struct_1[i + 1]) # Matrix with random values
-        theta_1[i] = theta_1[i] * rand_sign * epsilon # Sign randomaisation and value limaitation
-    # Second subnetwork
-    w_struct_2 = numpy.hstack((hidden_1[-1], hidden_2, output_size))
-    theta_2 = range(num_lay_2 + 1)
-    for i in range(num_lay_2 + 1):
-        rand_sign = numpy.random.randint(-1, 2, (w_struct_2[i] + 1,
-                w_struct_2[i + 1]))
-        theta_2[i] = numpy.random.rand(w_struct_2[i] + 1, w_struct_2[i + 1])
-        theta_2[i] = theta_2[i] * rand_sign * epsilon
-    # Intermediate subnetwork (relation)
-    rand_sign = numpy.random.randint(-1, 2, (relation_in_size + 1, hidden_2[0]))
-    theta_relation = numpy.random.rand(relation_in_size + 1, hidden_2[0])
-    theta_relation = theta_relation * rand_sign * epsilon
-    return theta_1, theta_2, theta_relation
-
-
-
 def sigmoid(z):
-    '''Compute sigmoid function. alfa koefficient is noting? '''
+    '''Compute sigmoid function for given number z.'''
     g = 1.0 / (1.0+numpy.exp(-z));
     return g
-
-
-def forward_propagation(m, num_lay_1, num_lay_2, X, input_relation, theta_1,
-                 theta_2, theta_relation):
-    '''Compute activations of every unit in the ntework.'''
-    z_1 = range(num_lay_1 + 1)
-    a_1 = range(num_lay_1 + 1)
-    z_1[0] = X
-    a_1[0] = numpy.hstack((numpy.ones((m,1)),z_1[0]))
-    for i in range(1,num_lay_1 + 1):
-        z_1[i] = numpy.dot(a_1[i-1], theta_1[i-1])
-        a_1[i] = numpy.hstack((numpy.ones((m,1)), sigmoid(z_1[i])))
-    z_2 = range(num_lay_2 + 1)
-    a_2 = range(num_lay_2 + 1)
-    # a_1[-1] already have bias
-    rel_input_b = numpy.hstack((numpy.ones((m,1)), input_relation)) # add bias term to the relation input
-    z_2[0] = numpy.dot(a_1[-1], theta_2[0]) + numpy.dot(rel_input_b, theta_relation) # attention biases!!
-    a_2[0] = numpy.hstack((numpy.ones((m,1)), sigmoid(z_2[0])))
-    for i in range(1,num_lay_2 + 1):  # changing count for z_2 and a_2
-        z_2[i] = numpy.dot(a_2[i-1], theta_2[i])
-        a_2[i] = numpy.hstack((numpy.ones((m,1)), sigmoid(z_2[i])))
-    a_2[-1] = a_2[-1][:,1:]
-    return a_1, a_2
-
-
-
-def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
-        num_lay_1, num_lay_2, R, Y):
-    ''' Compute average error with regularization'''
-    cost = numpy.sum(-Y * numpy.log(a_2[-1]) - (1-Y) * numpy.log(1-a_2[-1])) / m # average cost
-    for i in range(num_lay_1):
-        reg_1 = numpy.sum(theta_1[i][:,1:] ** 2)
-    reg_realtion = numpy.sum(theta_relation[:,1:]**2)
-    for i in range(num_lay_2 + 1):
-        reg_2 = numpy.sum(theta_2[i][:,1:] ** 2)
-    regularization = (reg_1 + reg_2 + reg_realtion) * (R/(2*m))
-    J = cost + regularization
-    return J
-
 
 def sigmoid_gradient(z):
     '''Compute partial derivative of sigmoid function with respect to value z'''
@@ -103,122 +54,249 @@ def sigmoid_gradient(z):
     return g
 
 
+
+def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
+         output_size, num_lay_1, num_lay_2, epsilon):
+    '''
+    Generate 3 sets of matrices of initial weights according to the given structure.
+    Returns:
+        ----
+        theta_1: matrices of weights for the first subnetwork (list of arrays)
+        theta_2: matrices of weights for the second subnetwork (list of arrays)
+        theta_relation: theta_1: matrix of weights for the relations(array)
+    '''
+    # First subnetwork
+    w_struct_1 = numpy.hstack((input_size, hidden_1))  # append input vector as the first layer
+    theta_1 = range(num_lay_1)  # create list ready to fill with matrices of weights
+    for i in xrange(num_lay_1):  # loop over the layers of the first subnetwork
+        rand_sign = numpy.random.randint(-1, 2, (w_struct_1[i] + 1,  # matrix with ones with random signs
+                w_struct_1[i + 1]))
+        theta_1[i] = numpy.random.rand(w_struct_1[i] + 1, w_struct_1[i + 1])  # matrix with random values from 0 to 1
+        theta_1[i] = theta_1[i] * rand_sign * epsilon  # sign randomaisation and value limaitation
+    # Second subnetwork
+    w_struct_2 = numpy.hstack((hidden_1[-1], hidden_2, output_size))  # append input vector as the first layer
+    theta_2 = range(num_lay_2 + 1)  # create list ready to fill with matrices of weights
+    for i in xrange(num_lay_2 + 1):  # loop over the layers of the second subnetwork
+        rand_sign = numpy.random.randint(-1, 2, (w_struct_2[i] + 1,  # matrix with ones with random signs
+                w_struct_2[i + 1]))
+        theta_2[i] = numpy.random.rand(w_struct_2[i] + 1, w_struct_2[i + 1])  # matrix with random values from 0 to 1
+        theta_2[i] = theta_2[i] * rand_sign * epsilon  # sign randomaisation and value limaitation
+    # Intermediate subnetwork (relation)
+    rand_sign = numpy.random.randint(-1, 2, (relation_in_size + 1, hidden_2[0]))  # matrix with ones with random signs
+    theta_relation = numpy.random.rand(relation_in_size + 1, hidden_2[0])  # matrix with random values from 0 to 1
+    theta_relation = theta_relation * rand_sign * epsilon  # sign randomaisation and value limaitation
+    return theta_1, theta_2, theta_relation
+
+
+
+def forward_propagation(m, num_lay_1, num_lay_2, X, input_relation, theta_1,
+                 theta_2, theta_relation):
+    '''
+    Compute activations of every unit in the ntework.
+    Returns:
+        ----
+        a_1: astivations of neurons in the first subnetwork (list of arrays)
+        a_2: astivations of neurons in the second subnetwork (list of arrays)
+    '''
+    # First subnetwork:
+    z_1 = range(num_lay_1 + 1)
+    a_1 = range(num_lay_1 + 1)
+    z_1[0] = X  # input data
+    a_1[0] = numpy.hstack((numpy.ones((m,1)),z_1[0]))  # add bias units
+    for i in xrange(1,num_lay_1 + 1):  # loop over the first subnetwork
+        z_1[i] = numpy.dot(a_1[i-1], theta_1[i-1])  # perform matrix multiplication to compute sum for every unit
+        a_1[i] = numpy.hstack((numpy.ones((m,1)), sigmoid(z_1[i]))) # compute sigmoid function and add bias units
+    # Second subnetwork:
+    z_2 = range(num_lay_2 + 1)
+    a_2 = range(num_lay_2 + 1)
+    rel_input_b = numpy.hstack((numpy.ones((m,1)), input_relation)) # add bias term to the relation input, a_1[-1] already have bias
+    z_2[0] = numpy.dot(a_1[-1], theta_2[0]) + numpy.dot(rel_input_b, theta_relation)  # first layer in the second subnetwork
+    a_2[0] = numpy.hstack((numpy.ones((m,1)), sigmoid(z_2[0])))
+    for i in xrange(1,num_lay_2 + 1):  # loop over the other layers of the second subnetwork
+        z_2[i] = numpy.dot(a_2[i-1], theta_2[i])
+        a_2[i] = numpy.hstack((numpy.ones((m,1)), sigmoid(z_2[i])))
+    a_2[-1] = a_2[-1][:,1:]  # remove bias unit from the last(output) layer
+    return a_1, a_2
+
+
+
+def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
+        num_lay_1, num_lay_2, R, Y):
+    '''
+    Compute average error with regularization.
+    Returns:
+        ----
+        J: approximate error (float)
+    '''
+    # Average cost
+    cost = numpy.sum(-Y * numpy.log(a_2[-1]) - (1-Y) * numpy.log(1-a_2[-1])) / m
+    # Regularization
+    for i in xrange(num_lay_1):
+        reg_1 = numpy.sum(theta_1[i][:,1:] ** 2)
+    reg_realtion = numpy.sum(theta_relation[:,1:]**2)
+    for i in xrange(num_lay_2 + 1):
+        reg_2 = numpy.sum(theta_2[i][:,1:] ** 2)
+    regularization = (reg_1 + reg_2 + reg_realtion) * (R/(2*m))
+    J = cost + regularization
+    return J
+
+
+
 def back_propagation(m, a_1, a_2, input_relation, theta_1, theta_2, theta_relation,
         num_lay_1, num_lay_2, R, Y):
     '''
-    Compute error of every unit.
     Compute derivative of the cost function with respect to matrices theta.
+    Returns:
+        ----
+        grad_reg_1: partial derivatives of weights of the first subnetwork with
+                respect to error of the relevant neurons (list of arrays)
+        grad_reg_2: partial derivatives of weights of the second subnetwork with
+                respect to error of the relevant neurons (list of arrays)
+        rel_grad_reg: partial derivatives of the relation weights with respect
+                to error of the relevant neurons (array)
     '''
+    # Errors of neurons in th second subnetwork
     d_2 = range(num_lay_2 + 1)
     rel_input_b = numpy.hstack((numpy.ones((m,1)), input_relation))
     d_2[-1] = a_2[-1] - Y
-    for i in range(2,num_lay_2 + 1):
+    for i in xrange(2,num_lay_2 + 1):
         d_2[-i] = numpy.dot(d_2[-i + 1], theta_2[-i + 1][1:,:].T) * \
         sigmoid_gradient(numpy.dot(a_2[-i - 1], theta_2[-i]))
     d_2[0] = numpy.dot(d_2[1], theta_2[1][1:,:].T) * \
         sigmoid_gradient(numpy.dot(a_1[-1], theta_2[0]) + \
                 numpy.dot(rel_input_b, theta_relation))
+    # Errors of neurons in th first subnetwork
     d_1 = range(num_lay_1)
     d_1[-1] = numpy.dot(d_2[0], theta_2[0][1:,:].T) * \
         sigmoid_gradient(numpy.dot(a_1[-2], theta_1[-1]))
-    for i in range(2,num_lay_2 + 1):
+    for i in xrange(2,num_lay_2 + 1):
         d_1[-i] = numpy.dot(d_1[-i + 1], theta_1[-i + 1][1:,:].T) * \
         sigmoid_gradient(numpy.dot(a_1[-i - 1], theta_1[-i]))
+    # Gradient with regularization for the weights in the first subnetwork
     grad_1 = range(num_lay_1)
     grad_reg_1 = range(num_lay_1)
-    for i in range(num_lay_1):
-        grad_1[i] = numpy.dot(a_1[i].T, d_1[i]) / m
-        grad_reg_1[i] = grad_1[i]/m + R*theta_1[i] / m
-        grad_reg_1[i][0,:] = grad_1[i][0,:] / m
-    # relation
+    for i in xrange(num_lay_1):
+        grad_1[i] = numpy.dot(a_1[i].T, d_1[i])  # gradient
+        grad_reg_1[i] = grad_1[i]/m + R*theta_1[i] / m  # regularization term
+        grad_reg_1[i][0,:] = grad_1[i][0,:] / m  # exclude weights of the bias unit
+    # Gradient with regularization for the weights in relation weights matrix
     rel_grad = numpy.dot(rel_input_b.T, d_2[0])
-    rel_grad_reg = rel_grad/m + R*theta_relation/m
+    rel_grad_reg = rel_grad/m + R*theta_relation / m
     rel_grad_reg[0,:] = rel_grad[0,:] / m
-    # second subset
+    # Gradient with regularization for the weights in the second subnetwork
     grad_2 = range(num_lay_2 + 1)
     grad_reg_2 = range(num_lay_2 + 1)
-    grad_2[0] = numpy.dot(a_1[-1].T, d_2[0])
+    grad_2[0] = numpy.dot(a_1[-1].T, d_2[0])  # first matrix
     grad_reg_2[0] = grad_2[0]/m + R*theta_2[0] / m
     grad_reg_2[0][0,:] = grad_2[0][0,:] / m
-    for i in range(1, num_lay_2 + 1):
+    for i in xrange(1, num_lay_2 + 1):  # other matrices
         grad_2[i] = numpy.dot(a_2[i-1].T, d_2[i])
         grad_reg_2[i] = grad_2[i]/m + R*theta_2[i]/m
         grad_reg_2[i][0,:] = grad_2[i][0,:]/m
     return grad_reg_1, grad_reg_2, rel_grad_reg
 
+
+
 def descent(theta_1, theta_2, theta_relation, grad_reg_1, grad_reg_2,
         rel_grad_reg, num_lay_1, num_lay_2, alpha):
-    '''Change matrices of weights according to the gradient.'''
+    '''
+    Change matrices of weights according to the gradient.
+    Returns:
+        ----
+        theta_1_temp: new theta matrices for the first subnetwork (list of arrays)
+        theta_2_temp: new theta matrices for the second subnetwork (list of arrays)
+        theta_relation_temp: new theta matrix for relation weights (array)
+    '''
     theta_1_temp = range(num_lay_1)
-    for i in range(num_lay_1):
-        theta_1_temp[i] = theta_1[i] - alpha*grad_reg_1[i] # Change weights in the first subnetwork
-    theta_relation_temp = theta_relation - alpha*rel_grad_reg # Change relation weights
-    theta_2_temp = range(num_lay_2)
-    for i in range(num_lay_2):
-        theta_2_temp[i] = theta_2[i] - alpha*grad_reg_2[i] # Change weights in the second subnetwork
+    for i in xrange(num_lay_1):
+        theta_1_temp[i] = theta_1[i] - alpha*grad_reg_1[i]  # Change weights in the first subnetwork
+    theta_relation_temp = theta_relation - alpha*rel_grad_reg  # Change relation weights
+    theta_2_temp = range(num_lay_2 + 1)
+    for i in xrange(num_lay_2 + 1):
+        theta_2_temp[i] = theta_2[i] - alpha*grad_reg_2[i]  # Change weights in the second subnetwork
     return theta_1_temp, theta_2_temp, theta_relation_temp
 
 
 
-def gradient_check(theta, theta_1, theta_2, theta_relation):
-    numgrad = numpy.zeros((numpy.shape(theta_1[1])))
-    perturb = numpy.zeros((numpy.shape(theta_1[1])))
-    e = 1e-4
-    th_ch_minus = numpy.copy(theta_1)
-    th_ch_plus = numpy.copy(theta_1)
-    for p in range(numpy.size(theta_1[1])):
-        perturb.flat[p] = e
-        th_ch_minus[1] = theta_1[1] - perturb
-        th_ch_plus[1] = theta_1[1] + perturb
-        [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2,
-                  X, input_relation, th_ch_minus, theta_2, theta_relation)
-        j_ch_minus = compute_cost_function(a_chm_2, th_ch_minus, theta_2, theta_relation,
-        num_lay_1, num_lay_2, R, Y)
-        [a_chp_1, a_chp_2] = forward_propagation(m, num_lay_1, num_lay_2,
-                  X, input_relation, th_ch_plus, theta_2, theta_relation)
-        j_ch_plus = compute_cost_function(a_chp_2, th_ch_plus, theta_2, theta_relation,
-        num_lay_1, num_lay_2, R, Y)
-        numgrad.flat[p] = (j_ch_plus - j_ch_minus) / (2*e)
-        perturb.flat[p] = 0
-# print numgrad
+def gradient_check(e, m, X, Y, input_relation, theta_1, theta_2, theta_relation,
+        num_lay_1, num_lay_2, R):
+    '''
+    Computes the numerical gradient of the function around theta for every weight.
+    Returns:
+        ----
+        numgrad_1: numerical estimation of the gradients in the first subnetwork
+                (list of arrays)
+        numgrad_2: numerical estimation of the gradients in the second subnetwork
+                (list of arrays)
+        numgrad_rel: numerical estimation of the gradients for the raletion
+                weights (list of arrays)
+    '''
+    # Estimation for the first subnetwork:
+    numgrad_1 = range(num_lay_1)
+    for i in xrange(num_lay_1):  # loop over the weight matrices in the first subnetwork
+        numgrad_1[i] = numpy.zeros((numpy.shape(theta_1[i])))  # structure which will contain estimation of the gradient for every weight
+        perturb = numpy.zeros((numpy.shape(theta_1[i])))  # this structure we will use to change weights in the original matrix
+        for p in xrange(numpy.size(theta_1[i])):  # loop over all of the elements in the current weight matrix
+            perturb.flat[p] = e  # change only one element per cycle, the others still equal zero
+            th_ch_minus = theta_1[:]
+            th_ch_plus = theta_1[:]
+            th_ch_minus[i] = theta_1[i] - perturb  # create weight matrices with one weight cahanged
+            th_ch_plus[i] = theta_1[i] + perturb
+            # Compute "minus" error:
+            [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2, X,  # perform forward propagation with new weight
+                    input_relation, th_ch_minus, theta_2, theta_relation)
+            j_ch_minus = compute_cost_function(m, a_chm_2, th_ch_minus, theta_2,  # compute  new cost function
+                    theta_relation, num_lay_1, num_lay_2, R, Y)
+            # Compute "plus" error:
+            [a_chp_1, a_chp_2] = forward_propagation(m, num_lay_1, num_lay_2, X,  # perform forward propagation with new weight
+                    input_relation, th_ch_plus, theta_2, theta_relation)
+            j_ch_plus = compute_cost_function(m, a_chp_2, th_ch_plus, theta_2,  # compute  new cost function
+                    theta_relation, num_lay_1, num_lay_2, R, Y)
+            numgrad_1[i].flat[p] = (j_ch_plus - j_ch_minus) / (2*e)  # numerical estimation for one particular weight
+            perturb.flat[p] = 0  # prepare "perpurb" for the further computations
 
-def gradient_check(theta, theta_1, theta_2, theta_relation):
-    numgrad = numpy.zeros((numpy.shape(theta_1[0])))
-    perturb = numpy.zeros((numpy.shape(theta_1[0])))
-    e = 1e-4
-    th_ch_minus = numpy.copy(theta_1)
-    th_ch_plus = numpy.copy(theta_1)
-    for p in range(numpy.size(theta_1[0])):
-        perturb.flat[p] = e
-        th_ch_minus[0] = theta_1[0] - perturb
-        th_ch_plus[0] = theta_1[0] + perturb
-        [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2,
-                  X, input_relation, th_ch_minus, theta_2, theta_relation)
-        j_ch_minus = compute_cost_function(a_chm_2, th_ch_minus, theta_2, theta_relation,
-        num_lay_1, num_lay_2, R, Y)
-        [a_chp_1, a_chp_2] = forward_propagation(m, num_lay_1, num_lay_2,
-                  X, input_relation, th_ch_plus, theta_2, theta_relation)
-        j_ch_plus = compute_cost_function(a_chp_2, th_ch_plus, theta_2, theta_relation,
-        num_lay_1, num_lay_2, R, Y)
-        numgrad.flat[p] = (j_ch_plus - j_ch_minus) / (2*e)
-        perturb.flat[p] = 0
-# print numgrad
+    # Estimation for the relation matrix:
+    numgrad_rel = numpy.zeros((numpy.shape(theta_relation)))  # structure which will contain estimation of the gradient for every weight
+    perturb = numpy.zeros((numpy.shape(theta_relation)))  # this structure we will use to change weights in the original matrix
+    for p in xrange(numpy.size(theta_relation)):  # loop over all of the elements in the current weight matrix
+        perturb.flat[p] = e  # change only one element per cycle, the others still equal zero
+        th_ch_minus = theta_relation - perturb  # create weight matrices with one weight cahanged
+        th_ch_plus = theta_relation + perturb
+        # Compute "minus" error:
+        [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2, X,  # perform forward propagation with new weight
+                input_relation, theta_1, theta_2, th_ch_minus)
+        j_ch_minus = compute_cost_function(m, a_chm_2, theta_1, theta_2,  # compute  new cost function
+                th_ch_minus, num_lay_1, num_lay_2, R, Y)
+        # Compute "plus" error:
+        [a_chp_1, a_chp_2] = forward_propagation(m, num_lay_1, num_lay_2, X,  # perform forward propagation with new weight
+                input_relation, theta_1, theta_2, th_ch_plus)
+        j_ch_plus = compute_cost_function(m, a_chp_2, theta_1, theta_2,  # compute  new cost function
+                th_ch_plus, num_lay_1, num_lay_2, R, Y)
+        numgrad_rel.flat[p] = (j_ch_plus - j_ch_minus) / (2*e)  # numerical estimation for one particular weight
+        perturb.flat[p] = 0  # prepare "perpurb" for the further computations
 
+    # Estimation for the second subnetwork:
+    numgrad_2 = range(num_lay_2 + 1)
+    for i in xrange(num_lay_2 + 1):  # loop over the weight matrices in the second subnetwork
+        numgrad_2[i] = numpy.zeros((numpy.shape(theta_2[i])))  # structure which will contain estimation of the gradient for every weight
+        perturb = numpy.zeros((numpy.shape(theta_2[i])))  # this structure we will use to change weights in the original matrix
+        for p in xrange(numpy.size(theta_2[i])):  # loop over all of the elements in the current weight matrix
+            perturb.flat[p] = e  # change only one element per cycle, the others still equal zero
+            th_ch_minus = theta_2[:]
+            th_ch_plus = theta_2[:]
+            th_ch_minus[i] = theta_2[i] - perturb  # create weight matrices with one weight cahanged
+            th_ch_plus[i] = theta_2[i] + perturb
+            # Compute "minus" error:
+            [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2, X,  # perform forward propagation with new weight
+                    input_relation, theta_1, th_ch_minus, theta_relation)
+            j_ch_minus = compute_cost_function(m, a_chm_2, theta_1, th_ch_minus,  # compute  new cost function
+                    theta_relation, num_lay_1, num_lay_2, R, Y)
+            # Compute "plus" error:
+            [a_chp_1, a_chp_2] = forward_propagation(m, num_lay_1, num_lay_2, X,  # perform forward propagation with new weight
+                    input_relation, theta_1, th_ch_plus, theta_relation)
+            j_ch_plus = compute_cost_function(m, a_chp_2, theta_1, th_ch_plus,  # compute  new cost function
+                    theta_relation, num_lay_1, num_lay_2, R, Y)
+            numgrad_2[i].flat[p] = (j_ch_plus - j_ch_minus) / (2*e)  # numerical estimation for one particular weight
+            perturb.flat[p] = 0  # prepare "perpurb" for the further computations
 
-
-def gradient_check(theta, theta_1, theta_2, theta_relation):
-    numgrad_simple = numpy.zeros((numpy.shape(theta_2[0])))
-    perturb = numpy.zeros((numpy.shape(theta_2[0])))
-    e = 2
-    th_ch_minus = numpy.copy(theta_2)
-    for p in range(numpy.size(theta_2[0])):
-        perturb.flat[p] = e
-        th_ch_minus[0] = theta_2[0] - perturb
-        [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2, X, input_relation,
-        theta_1, th_ch_minus, theta_relation)
-        j_ch_minus = compute_cost_function(a_chm_2, theta_1, th_ch_minus, theta_relation,
-        num_lay_1, num_lay_2, R, Y)
-        numgrad_simple.flat[p] = (o - j_ch_minus) / e
-        perturb.flat[p] = 0
-# print numgrad_simple
-
+    return numgrad_1, numgrad_2, numgrad_rel
