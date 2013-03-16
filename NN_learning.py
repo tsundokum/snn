@@ -10,15 +10,15 @@
 #-------------------------------------------------------------------------------
 import os
 os.chdir('C:/')
-import numpy
+import numpy as np
 import neural_network
 
 
 # Parameters:
 input_size = 3  # Item number
-hidden_1 = [3, 2]  # Struscture of the first subnetwork
+hidden_1 = (3, 2)  # Struscture of the first subnetwork
 relation_in_size = 3  # Relations number
-hidden_2 = [3, 2]  # Structure of the second subnetwork
+hidden_2 = (3, 2)  # Structure of the second subnetwork
 output_size = 3  # Number of properties
 epsilon = 0.5  # Limitation of  initial eights
 alpha = 0.1  # Learning rate
@@ -36,11 +36,11 @@ m = 3  # number of training examples
 
 
 # Create test data set
-X = numpy.arange(input_size * m).reshape(m, input_size)
-input_relation = numpy.arange(relation_in_size * m).reshape(m, relation_in_size)
-Y = numpy.ones((m * output_size))
+X = np.arange(input_size * m).reshape(m, input_size)
+input_relation = np.arange(relation_in_size * m).reshape(m, relation_in_size)
+Y = np.ones((m * output_size))
 for l in range(m * output_size):
-    Y[l] = numpy.random.choice([0,1])
+    Y[l] = np.random.choice([0,1])
 Y = Y.reshape(m, output_size)
 
 
@@ -48,7 +48,7 @@ Y = Y.reshape(m, output_size)
 m = len(X) # Batch size
 num_lay_1 = len(hidden_1) # Number of layers in the first subnetwork
 num_lay_2 = len(hidden_2) # Number of layers in the second subnetwork
-J = numpy.arange(number_of_epochs * number_of_batches, dtype=float). \
+J = np.arange(number_of_epochs * number_of_batches, dtype=float). \
         reshape(number_of_epochs, number_of_batches)  # this list will contain log of errors
 
 # Data division (optional):
@@ -87,10 +87,10 @@ for epoch in range(number_of_epochs): # Beginning of epoch loop
                 a_1, a_2, input_relation, theta_1, theta_2, theta_relation,
                 num_lay_1, num_lay_2, R, Y)
 
-        # Computes the numerical gradient of the function around theta for every weight (optional).
-        '''[numgrad_1, numgrad_2, numgrad_rel] = neural_network.gradient_check(e,
-                m, X, Y, input_relation, theta_1, theta_2, theta_relation,
-                num_lay_1, num_lay_2, R)'''
+        # # Computes the numerical gradient of the function around theta for every weight (optional).
+        # [numgrad_1, numgrad_2, numgrad_rel] = neural_network.gradient_check(e,
+        #         m, X, Y, input_relation, theta_1, theta_2, theta_relation,
+        #         num_lay_1, num_lay_2, R)
 
         # Change matrices of weights according to the gradient.
         [theta_1_temp, theta_2_temp, theta_relation_temp] = \
