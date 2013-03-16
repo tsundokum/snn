@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #-------------------------------------------------------------------------------
 # Name:        neural_network
 # Purpose:     Contains functions to create and learn McClelland's neural network.
