@@ -11,17 +11,17 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 import os
-os.chdir('C:/')
+os.chdir('C:/SNN/')
 import numpy as np
 import neural_network
 
 
 # Parameters:
-input_size = 3  # Item number
-hidden_1 = (3, 2)  # Structure of the first subnetwork
-relation_in_size = 3  # Relations number
-hidden_2 = (3, 2)  # Structure of the second subnetwork
-output_size = 3  # Number of properties
+input_size = 4  # Item number
+hidden_1 = [5, 3, 4]  # Structure of the first subnetwork
+relation_in_size = 2  # Relations number
+hidden_2 = [2, 4, 5]  # Structure of the second subnetwork
+output_size = 2  # Number of properties
 epsilon = 0.5  # Limitation of  initial eights
 alpha = 0.1  # Learning rate
 R = 0.0  # Coefficient of regularization
@@ -30,7 +30,7 @@ number_of_epochs = 3
 number_of_batches = 8
 
 # Optional:
-m = 3  # number of training examples
+m = 5  # number of training examples
 
 
 

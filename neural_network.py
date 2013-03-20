@@ -165,13 +165,13 @@ def back_propagation(m, a_1, a_2, input_relation, theta_1, theta_2, theta_relati
         d_2[-i] = np.dot(d_2[-i + 1], theta_2[-i + 1][1:, :].T) * \
                   sigmoid_gradient(np.dot(a_2[-i - 1], theta_2[-i]))
     d_2[0] = np.dot(d_2[1], theta_2[1][1:, :].T) * \
-             sigmoid_gradient(np.dot(a_1[-1], theta_2[0]) +
-                              np.dot(rel_input_b, theta_relation))
+             (sigmoid_gradient(np.dot(a_1[-1], theta_2[0])) +
+             sigmoid_gradient(np.dot(rel_input_b, theta_relation)))
     # Errors of neurons in th first subnetwork
     d_1 = range(num_lay_1)
     d_1[-1] = np.dot(d_2[0], theta_2[0][1:, :].T) * \
               sigmoid_gradient(np.dot(a_1[-2], theta_1[-1]))
-    for i in xrange(2, num_lay_2 + 1):
+    for i in xrange(2, num_lay_1 + 1):
         d_1[-i] = np.dot(d_1[-i + 1], theta_1[-i + 1][1:, :].T) * \
                   sigmoid_gradient(np.dot(a_1[-i - 1], theta_1[-i]))
 
