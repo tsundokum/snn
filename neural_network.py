@@ -14,13 +14,13 @@
 """
 Contains functions to create and learn McClelland's neural network.
 
-Changeable parameters:
+Parameters:
     ----
     input_size: item number (integer)
     hidden_1: structure of the first subnetwork (list of integers)
     hidden_2: structure of the second subnetwork (list of integers)
     relation_in_size: number of input relations (integer)
-    output_size: number of properties (integer)
+    output_size: number of attributes (integer)
     epsilon: limitation of  initial eights (float)
     R: coefficient of regularization (float)
     alpha: learning rate (float)
@@ -32,10 +32,10 @@ Data:
             columns: dimensions)
     input_relation: input training set for relations (numpy.ndarray;
             rows: training examples; columns: dimensions)
-    Y: output training set for properties (numpy.ndarray; rows:
+    Y: output training set for attributes (numpy.ndarray; rows:
             training examples; columns: dimensions)
 
-Usefull variables:
+Useful variables:
     ----
     m: number of examples in the training set
     num_lay_1: number of layers in the first subnetwork
@@ -47,7 +47,7 @@ import numpy as np
 
 def sigmoid(z):
     """Compute sigmoid function for given number z."""
-    return 1.0 / (1.0 + np.exp(-z))
+    return 1 / (1.0 + np.exp(-z))
 
 
 def sigmoid_gradient(z):
@@ -74,16 +74,17 @@ def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
                                               w_struct_1[i + 1]))                  # matrix with ones with random signs
         theta_1[i] = np.random.rand(w_struct_1[i] + 1, w_struct_1[i + 1])  # matrix with random values from 0 to 1
         theta_1[i] = theta_1[i] * rand_sign * epsilon  # sign randomisation and value limitation
-        # Second subnetwork
+
+    # Second subnetwork
     w_struct_2 = np.hstack((hidden_1[-1], hidden_2, output_size))  # append input vector as the first layer
     theta_2 = range(num_lay_2 + 1)  # create list ready to fill with matrices of weights
     for i in xrange(num_lay_2 + 1):  # loop over the layers of the second subnetwork
         rand_sign = np.random.randint(-1, 2, (w_struct_2[i] + 1,
-                                              w_struct_2[
-                                                  i + 1]))                           # matrix with ones with random signs
+                                              w_struct_2[i + 1]))          # matrix with ones with random signs
         theta_2[i] = np.random.rand(w_struct_2[i] + 1, w_struct_2[i + 1])  # matrix with random values from 0 to 1
         theta_2[i] = theta_2[i] * rand_sign * epsilon  # sign randomisation and value limitation
-        # Intermediate subnetwork (relation)
+
+    # Intermediate subnetwork (relation)
     rand_sign = np.random.randint(-1, 2, (relation_in_size + 1, hidden_2[0]))  # matrix with ones with random signs
     theta_relation = np.random.rand(relation_in_size + 1, hidden_2[0])  # matrix with random values from 0 to 1
     theta_relation = theta_relation * rand_sign * epsilon  # sign randomisation and value limitation
@@ -107,7 +108,8 @@ def forward_propagation(m, num_lay_1, num_lay_2, X, input_relation, theta_1,
     for i in xrange(1, num_lay_1 + 1):  # loop over the first subnetwork
         z_1[i] = np.dot(a_1[i - 1], theta_1[i - 1])  # perform matrix multiplication to compute sum for every unit
         a_1[i] = np.hstack((np.ones((m, 1)), sigmoid(z_1[i])))  # compute sigmoid function and add bias units
-        # Second subnetwork:
+
+    # Second subnetwork:
     z_2 = range(num_lay_2 + 1)
     a_2 = range(num_lay_2 + 1)
     rel_input_b = np.hstack((np.ones((m, 1)), input_relation))          # add bias term to the relation input,
@@ -172,17 +174,20 @@ def back_propagation(m, a_1, a_2, input_relation, theta_1, theta_2, theta_relati
     for i in xrange(2, num_lay_2 + 1):
         d_1[-i] = np.dot(d_1[-i + 1], theta_1[-i + 1][1:, :].T) * \
                   sigmoid_gradient(np.dot(a_1[-i - 1], theta_1[-i]))
-        # Gradient with regularization for the weights in the first subnetwork
+
+    # Gradient with regularization for the weights in the first subnetwork
     grad_1 = range(num_lay_1)
     grad_reg_1 = range(num_lay_1)
     for i in xrange(num_lay_1):
         grad_1[i] = np.dot(a_1[i].T, d_1[i])  # gradient
         grad_reg_1[i] = grad_1[i] / m + R * theta_1[i] / m  # regularization term
         grad_reg_1[i][0, :] = grad_1[i][0, :] / m  # exclude weights of the bias unit
-        # Gradient with regularization for the weights in relation weights matrix
+
+    # Gradient with regularization for the weights in relation weights matrix
     rel_grad = np.dot(rel_input_b.T, d_2[0])
     rel_grad_reg = rel_grad / m + R * theta_relation / m
     rel_grad_reg[0, :] = rel_grad[0, :] / m
+
     # Gradient with regularization for the weights in the second subnetwork
     grad_2 = range(num_lay_2 + 1)
     grad_reg_2 = range(num_lay_2 + 1)
