@@ -2,7 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from Tkinter import *
-from rope.base.builtins import get_list
+from createpropositions import read_all_propositions
+
+
+proposition_words_file = 'resources/RogersMcClelland08.yaml'
 
 
 def get_list_from_file(file_name):
@@ -17,16 +20,7 @@ def get_list_from_file(file_name):
 
 
 def generate_stimuli():
-    attributes = get_list_from_file('resources/attributes.txt')
-    items = get_list_from_file('resources/items.txt')
-    relations = get_list_from_file('resources/relations.txt')
-
-    props = []
-    for attr in attributes:
-        for item in items:
-            for relation in relations:
-                props.append((item, relation, attr))
-    return props
+    return read_all_propositions(proposition_words_file)
 
 
 class ScalerApp:
@@ -50,7 +44,6 @@ class ScalerApp:
     def next_scale(self):
         print "new value is", self.scale_var.get()
         self.label_var.set(self.scale_var.get())
-
 
 
 if __name__ == "__main__":

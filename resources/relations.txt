@@ -1,4 +1,0 @@
-ISA
-is
-can
-has

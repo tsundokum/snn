@@ -1,4 +1,12 @@
-items: [pine, oak, rose, daisy, robin, canary, sunfish, salmon]
+items:
+  - pine
+  - oak
+  - rose
+  - daisy
+  - robin
+  - canary
+  - sunfish
+  - salmon
 relations:
 - attributes: [living thing, plant, animal, tree, flower, bird, pine, oak, rose, daisy,
     robin, canary, sunfish, salmon]
