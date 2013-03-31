@@ -10,8 +10,9 @@
 # Copyright:   (c) 11 2013
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
-import os
-os.chdir('C:/SNN/')
+
+# import os
+# os.chdir('C:/SNN/')
 import numpy as np
 import neural_network
 
@@ -42,7 +43,7 @@ X = np.arange(input_size * m).reshape(m, input_size)
 input_relation = np.arange(relation_in_size * m).reshape(m, relation_in_size)
 Y = np.ones((m * output_size))
 for l in range(m * output_size):
-    Y[l] = np.random.choice([0, 1])
+    Y[l] = np.random.choice(2)
 Y = Y.reshape(m, output_size)
 
 

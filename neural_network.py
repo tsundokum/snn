@@ -70,24 +70,19 @@ def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
     w_struct_1 = np.hstack((input_size, hidden_1))  # append input vector as the first layer
     theta_1 = range(num_lay_1)  # create list ready to fill with matrices of weights
     for i in xrange(num_lay_1):  # loop over the layers of the first subnetwork
-        rand_sign = np.random.randint(-1, 2, (w_struct_1[i] + 1,
-                                              w_struct_1[i + 1]))                  # matrix with ones with random signs
-        theta_1[i] = np.random.rand(w_struct_1[i] + 1, w_struct_1[i + 1])  # matrix with random values from 0 to 1
-        theta_1[i] = theta_1[i] * rand_sign * epsilon  # sign randomisation and value limitation
+        # matrix with random values from (-1 * epsilon) to (1 * epsilon)
+        theta_1[i] = (np.random.rand(w_struct_1[i] + 1, w_struct_1[i + 1]) * 2 - 1) * epsilon
 
     # Second subnetwork
     w_struct_2 = np.hstack((hidden_1[-1], hidden_2, output_size))  # append input vector as the first layer
     theta_2 = range(num_lay_2 + 1)  # create list ready to fill with matrices of weights
     for i in xrange(num_lay_2 + 1):  # loop over the layers of the second subnetwork
-        rand_sign = np.random.randint(-1, 2, (w_struct_2[i] + 1,
-                                              w_struct_2[i + 1]))          # matrix with ones with random signs
-        theta_2[i] = np.random.rand(w_struct_2[i] + 1, w_struct_2[i + 1])  # matrix with random values from 0 to 1
-        theta_2[i] = theta_2[i] * rand_sign * epsilon  # sign randomisation and value limitation
+        # matrix with random values from (-1 * epsilon) to (1 * epsilon)
+        theta_2[i] = (np.random.rand(w_struct_2[i] + 1, w_struct_2[i + 1]) * 2 - 1) * epsilon
 
     # Intermediate subnetwork (relation)
-    rand_sign = np.random.randint(-1, 2, (relation_in_size + 1, hidden_2[0]))  # matrix with ones with random signs
-    theta_relation = np.random.rand(relation_in_size + 1, hidden_2[0])  # matrix with random values from 0 to 1
-    theta_relation = theta_relation * rand_sign * epsilon  # sign randomisation and value limitation
+    # matrix with random values from (-1 * epsilon) to (1 * epsilon)
+    theta_relation = (np.random.rand(relation_in_size + 1, hidden_2[0]) * 2 - 1) * epsilon
     return theta_1, theta_2, theta_relation
 
 
