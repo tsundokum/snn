@@ -56,6 +56,14 @@ def sigmoid_gradient(z):
     return q * (1 - q)
 
 
+def generate_rand_weights_for_subnet(w_struct, epsilon):
+    num_lay = len(w_struct) - 1
+    theta = range(num_lay)  # create list ready to fill with matrices of weights
+    for i in xrange(num_lay):  # loop over the layers of the first subnetwork
+        # matrix with random values from (-1 * epsilon) to (1 * epsilon)
+        theta[i] = (np.random.rand(w_struct[i] + 1, w_struct[i + 1]) * 2 - 1) * epsilon
+    return theta
+
 def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
                        output_size, num_lay_1, num_lay_2, epsilon):
     """
@@ -66,19 +74,11 @@ def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
         theta_2: matrices of weights for the second subnetwork (list of arrays)
         theta_relation: theta_1: matrix of weights for the relations(array)
     """
-    # First subnetwork
-    w_struct_1 = np.hstack((input_size, hidden_1))  # append input vector as the first layer
-    theta_1 = range(num_lay_1)  # create list ready to fill with matrices of weights
-    for i in xrange(num_lay_1):  # loop over the layers of the first subnetwork
-        # matrix with random values from (-1 * epsilon) to (1 * epsilon)
-        theta_1[i] = (np.random.rand(w_struct_1[i] + 1, w_struct_1[i + 1]) * 2 - 1) * epsilon
 
+    # First subnetwork
+    theta_1 = generate_rand_weights_for_subnet(np.hstack((input_size, hidden_1)), epsilon)
     # Second subnetwork
-    w_struct_2 = np.hstack((hidden_1[-1], hidden_2, output_size))  # append input vector as the first layer
-    theta_2 = range(num_lay_2 + 1)  # create list ready to fill with matrices of weights
-    for i in xrange(num_lay_2 + 1):  # loop over the layers of the second subnetwork
-        # matrix with random values from (-1 * epsilon) to (1 * epsilon)
-        theta_2[i] = (np.random.rand(w_struct_2[i] + 1, w_struct_2[i + 1]) * 2 - 1) * epsilon
+    theta_2 = generate_rand_weights_for_subnet(np.hstack((hidden_1[-1], hidden_2, output_size)), epsilon)
 
     # Intermediate subnetwork (relation)
     # matrix with random values from (-1 * epsilon) to (1 * epsilon)
