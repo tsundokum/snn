@@ -16,7 +16,7 @@ FINISH_MESSAGE = "Эксперимент окончен. Спасибо!"
 random.seed(113)
 
 proposition_words_file = 'resources/RogersMcClelland08_ru.yaml'
-output_file = 'resources/distances.csv'
+output_file = 'resources/test-distances.csv'
 SCALER_DEFAULT_VALUE = 0
 
 
@@ -37,8 +37,7 @@ def generate_and_shuffle_propositions_generator():
 
     for i, prop in enumerate(props):
         yield prop
-        if i >= 1:
-            break
+        print i + 1
 
 
 def proposition_text_view(proposition_as_tuple):
@@ -51,7 +50,6 @@ def write_out_answer(proposition, scale_value):
         write_line = u','.join(proposition + (unicode(scale_value),)) + u'\n'
         print write_line,
         f.write(write_line.encode('utf8'))
-
 
 
 class ScalerApp:
