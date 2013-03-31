@@ -19,21 +19,26 @@ def get_list_from_file(file_name):
 def generate_stimuli():
     attributes = get_list_from_file('resources/attributes.txt')
     items = get_list_from_file('resources/items.txt')
-    relations = get_list_from_file('resources/items.txt')
+    relations = get_list_from_file('resources/relations.txt')
 
     props = []
     for attr in attributes:
         for item in items:
-            for relations in relations:
-                props.append((item, relations, attr))
-    return len(props)
-
+            for relation in relations:
+                props.append((item, relation, attr))
+    return props
 
 
 class ScalerApp:
-    def __init__(self, master):
+    def __init__(self, master, props):
+        self.props = props
+
         frame = Frame(master)
         frame.pack()
+
+        self.label_var = StringVar(value=" ")
+        self.label = Label(frame, textvariable=self.label_var)
+        self.label.pack(anchor=CENTER)
 
         self.scale_var = IntVar()
         self.scale = Scale(frame, from_=0, to=7, orient="horizontal", variable=self.scale_var)
@@ -44,12 +49,11 @@ class ScalerApp:
 
     def next_scale(self):
         print "new value is", self.scale_var.get()
-
+        self.label_var.set(self.scale_var.get())
 
 
 
 if __name__ == "__main__":
-    print generate_stimuli()
     root = Tk()
-    app = ScalerApp(root)
+    app = ScalerApp(root, generate_stimuli())
     root.mainloop()
