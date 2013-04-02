@@ -16,19 +16,9 @@ FINISH_MESSAGE = "Эксперимент окончен. Спасибо!"
 random.seed(113)
 
 proposition_words_file = 'resources/RogersMcClelland08_ru.yaml'
-output_file = 'resources/test-distances.csv'
+words_output_file = 'resources/test-distances.csv'
+matrix_output_file = 'resources/test-distance-matrix.csv'
 SCALER_DEFAULT_VALUE = 0
-
-
-def get_list_from_file(file_name):
-    rc = []
-    with open(file_name) as f:
-        for line in f:
-            line_item = line.strip()
-            if not line_item:
-                continue
-            rc.append(line_item)
-    return rc
 
 
 def generate_and_shuffle_propositions_generator():
@@ -46,10 +36,41 @@ def proposition_text_view(proposition_as_tuple):
 
 
 def write_out_answer(proposition, scale_value):
-    with open(output_file, "a") as f:
+    with open(words_output_file, "a") as f:
         write_line = u','.join(proposition + (unicode(scale_value),)) + u'\n'
         print write_line,
         f.write(write_line.encode('utf8'))
+
+
+def get_id_from_dictionary(obj, dic):
+    rc = -1     # Return Code
+    if obj in dic:
+        rc = dic[obj]
+    else:
+        rc = max(dic.values()) + 1 if len(dic) > 0 else 0
+        dic[obj] = rc
+    assert rc > -1
+    return rc
+
+
+def scale_distance(value_from_scaler):
+    return float(value_from_scaler) / 7.0
+
+
+def convert_to_bags(input_file_name, output_file_name):
+    items = {}
+    relations = {}
+    attributes = {}
+    with open(input_file_name) as f_in:
+        with open(output_file_name, "wb") as f_out:
+            for line in f_in:
+                if not line.strip():
+                    continue
+                item, relation, attribute, credibility = line.strip().split(',')
+                item_id = get_id_from_dictionary(item, items)
+                rel_id = get_id_from_dictionary(relation, relations)
+                attr_id = get_id_from_dictionary(attribute, attributes)
+                f_out.write("%d, %d, %d, %.3f\n" % (item_id, rel_id, attr_id, scale_distance(credibility)))
 
 
 class ScalerApp:
@@ -86,8 +107,11 @@ class ScalerApp:
             self.button['text'] = BUTTON_NEXT_TEXT
             self.scale['state'] = NORMAL
         except StopIteration:
-            tkMessageBox.showinfo("", FINISH_MESSAGE)
-            self.master.destroy()
+            self.finish()
+
+    def finish(self):
+        tkMessageBox.showinfo("", FINISH_MESSAGE)
+        self.master.destroy()
 
 
 def center_window(tk_root):
@@ -100,7 +124,8 @@ def center_window(tk_root):
 
 
 if __name__ == "__main__":
-    root = Tk()
-    app = ScalerApp(root, generate_and_shuffle_propositions_generator())
-    center_window(root)
-    root.mainloop()
+    convert_to_bags(words_output_file, matrix_output_file)
+    # root = Tk()
+    # app = ScalerApp(root, generate_and_shuffle_propositions_generator())
+    # center_window(root)
+    # root.mainloop()
