@@ -20,14 +20,14 @@ import csv
 np.random.seed(111)
 
 # Parameters:
-hidden_1 = [5, 3, 4]  # Structure of the first subnetwork
-hidden_2 = [2, 4, 5]  # Structure of the second subnetwork
-epsilon = 0.5  # Limitation of  initial eights
+hidden_1 = [8,10]  # Structure of the first subnetwork
+hidden_2 = [10]  # Structure of the second subnetwork
+epsilon = 0.2  # Limitation of  initial eights
 alpha = 0.1  # Learning rate
-R = 0.0  # Coefficient of regularization
+R = 0.2  # Coefficient of regularization
 e = 1e-4  # value of weights changing in the gradient check function
-epochs_count = 3
-batches_count = 8
+epochs_count = 100
+batches_count = 1
 file = 'resources/test-distance-matrix.csv'
 
 
@@ -53,9 +53,6 @@ output_size = np.size(Y, 1)  # Number of attributes
 num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
 num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
 J = np.zeros((epochs_count, batches_count))
-#J = np.arange(epochs_count * batches_count, dtype=float)\
-#    .reshape(epochs_count, batches_count)  # this list will contain log of errors
-
 
 # Data division (optional):
 # ...
@@ -86,7 +83,7 @@ for epoch in range(epochs_count):  # Beginning of epoch loop
                                                                num_lay_1, num_lay_2, R, Y)
 
         # Compute derivative of the cost function with respect to matrices theta.
-        [grad_reg_1, grad_reg_2, rel_grad_reg] = neural_network.back_propagation(m, a_1, a_2, input_relation,
+        [gradient_1, gradient_2, gradient_rel] = neural_network.back_propagation(m, a_1, a_2, input_relation,
                                                                                  theta_1, theta_2, theta_relation,
                                                                                  num_lay_1, num_lay_2, R, Y)
 
@@ -97,7 +94,7 @@ for epoch in range(epochs_count):  # Beginning of epoch loop
 
         # Change matrices of weights according to the gradient.
         [theta_1_temp, theta_2_temp, theta_relation_temp] = neural_network.descent(theta_1, theta_2, theta_relation,
-                                                                                   grad_reg_1, grad_reg_2, rel_grad_reg,
+                                                                                   gradient_1, gradient_2, gradient_rel,
                                                                                    num_lay_1, num_lay_2, alpha)
 
         # Update current weight matrices
@@ -107,3 +104,9 @@ for epoch in range(epochs_count):  # Beginning of epoch loop
 
 print "Errors by epochs = %s" % J.sum(1)
 
+# Gradient verification
+[numgrad_1, numgrad_2, numgrad_rel] = neural_network.gradient_check(e, m, X, Y,
+        input_relation, theta_1, theta_2, theta_relation, num_lay_1, num_lay_2, R)
+
+neural_network.verify_gradient(gradient_1, gradient_2, gradient_rel, numgrad_1,
+        numgrad_2, numgrad_rel)
