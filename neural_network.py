@@ -43,7 +43,7 @@ Useful variables:
 """
 
 import numpy as np
-
+import csv
 
 def sigmoid(z):
     """Compute sigmoid function for given number z."""
@@ -54,6 +54,54 @@ def sigmoid_gradient(z):
     """Compute partial derivative of sigmoid function with respect to value z"""
     q = sigmoid(z)
     return q * (1 - q)
+
+
+def data_preparation(file):
+    """
+    Prepare learning data from given csv-file.
+    Takes file name written as string.
+    Returns matrixes in format: number of examples by number of dimensions.
+    Every row in the matrix represents one learning example in which the
+    corresponding number equals one and others are zero.
+    Returns:
+        ----
+        item: learning matrix for items (array)
+        rel: learning matrix for ralations (array)
+        attr: learning matrix for attributes (array)
+
+    """
+    # Extract data from file as list of strings
+    infile = open(file, 'r')
+    table = []
+    for row in csv.reader(infile):
+        table.append(row)
+    infile.close()
+
+    # Transform lists of strings into array of floats and integers
+    for r in range(len(table)):
+        for c in range(3):
+            table[r][c] = int(table[r][c])
+    for r in range(len(table)):
+        table[r][3] = float(table[r][3])
+    table = np.array(table)
+
+    #define number of dimentions for every learning matrix
+    input_size = max(table[:,0]) + 1
+    relation_in_size = max(table[:,1]) + 1
+    output_size = max(table[:,2]) + 1
+
+    # Create learning matrices.
+    item = np.zeros((len(table), input_size))
+    for i in range(len(table)):
+        item[i][table[i][0]] = 1
+    rel = np.zeros((len(table), relation_in_size))
+    for i in range(len(table)):
+        rel[i][table[i][1]] = 1
+    attr = np.zeros((len(table), output_size))
+    for i in range(len(table)):
+        attr[i][table[i][0]] = table[i][3]
+    return item, rel, attr
+
 
 
 def generate_rand_weights_for_subnet(w_struct, epsilon):

@@ -12,62 +12,61 @@
 #-------------------------------------------------------------------------------
 
 # import os
-# os.chdir('C:/SNN/')
+# os.chdir('C:/SNN/temp')
 import numpy as np
 import neural_network
+import csv
 
 np.random.seed(111)
 
 # Parameters:
-input_size = 4  # Item number
 hidden_1 = [5, 3, 4]  # Structure of the first subnetwork
-relation_in_size = 2  # Relations number
 hidden_2 = [2, 4, 5]  # Structure of the second subnetwork
-output_size = 2  # Number of properties
 epsilon = 0.5  # Limitation of  initial eights
 alpha = 0.1  # Learning rate
 R = 0.0  # Coefficient of regularization
 e = 1e-4  # value of weights changing in the gradient check function
 epochs_count = 3
 batches_count = 8
-
-# Optional:
-m = 5  # number of training examples
-
+file = 'resources/test-distance-matrix.csv'
 
 
 # BEGINNING
 
-
 # Create test data set
-X = np.arange(input_size * m).reshape(m, input_size)
-input_relation = np.arange(relation_in_size * m).reshape(m, relation_in_size)
-Y = np.ones((m * output_size))
-for l in range(m * output_size):
-    Y[l] = np.random.choice(2)
-Y = Y.reshape(m, output_size)
+#X = np.arange(input_size * m).reshape(m, input_size)
+#input_relation = np.arange(relation_in_size * m).reshape(m, relation_in_size)
+#Y = np.ones((m * output_size))
+#for l in range(m * output_size):
+#    Y[l] = np.random.choice(2)
+#Y = Y.reshape(m, output_size)
+
+# Data set
+[X, input_relation, Y] = neural_network.data_preparation(file)
 
 
 # Usefull veriables:
-m = len(X)                          # Batch size
+m = len(X)                  # Batch size
+input_size = np.size(X, 1)  # Item number
+relation_in_size = np.size(input_relation, 1)  # Relations number
+output_size = np.size(Y, 1)  # Number of attributes
 num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
 num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
-J = np.arange(epochs_count * batches_count, dtype=float)\
-    .reshape(epochs_count, batches_count)  # this list will contain log of errors
+J = np.zeros((epochs_count, batches_count))
+#J = np.arange(epochs_count * batches_count, dtype=float)\
+#    .reshape(epochs_count, batches_count)  # this list will contain log of errors
+
 
 # Data division (optional):
 # ...
 
 # Separate validation set:
-#     training_data = ...
+#     training_data =
 #     validation_data = ...
 
 # Divide training data by number of batches
 #     X = ...
 #     Y = ...
-
-# Data preprocessing:
-# ...
 
 
 #  Create 3 sets of matrices of initial weights according to the given structure.
