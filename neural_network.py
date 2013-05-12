@@ -55,8 +55,69 @@ def sigmoid_gradient(z):
     q = sigmoid(z)
     return q * (1 - q)
 
-
 def data_preparation(file):
+    """
+    Prepare learning data from given csv-file (comma separated).
+    Takes file name written as string.
+    Returns matrixes in format: number of examples by number of dimensions.
+    Every row in the matrix represents one learning example in which the
+    corresponding number equals one and others are zero.
+    Returns:
+        ----
+        item: learning matrix for items (array)
+        rel: learning matrix for ralations (array)
+        attr: learning matrix for attributes (array)
+
+    """
+    # Extract data from file as list of strings
+    infile = open(file, 'r')
+    table = []
+    for row in csv.reader(infile):
+        table.append(row)
+    infile.close()
+
+    # Create data matrix
+    data = np.zeros((768,4))
+    # Fill the first column with numbers of items
+    for i in xrange(4):
+        data[i*192:(i+1)*192, 0] = i + 1
+    # Fill the second column with numbers of relations
+        tab = data[i*192:(i+1)*192]
+        for j in xrange(4):
+            tab[j*48:(j+1)*48, 1] = j + 1
+        data[i*192:(i+1)*192] =  tab
+    # Fill the third column with numbers of attributes
+    for i in xrange(16):
+        tab = data[i*48:(i+1)*48]
+        for j in range(48):
+            tab[j, 2] = j + 1
+        data[i*48:(i+1)*48] = tab
+    # Fill the fourth column with connection value
+    for i in xrange(4):
+        for j in xrange(192):
+            data[j + 192*i,3] = table[j][i+2]
+    del table
+
+    #define number of dimentions for every learning matrix
+    input_size = np.max(data[:,0])
+    relation_in_size = np.max(data[:,1])
+    output_size = np.max(data[:,2])
+
+    # Create learning matrices.
+    item = np.zeros((len(data), input_size))
+    for i in range(len(data)):
+        item[i, data[i, 0]-1] = 1
+    rel = np.zeros((len(data), relation_in_size))
+    for i in range(len(data)):
+        rel[i, data[i, 1]-1] = 1
+    attr = np.zeros((len(data), output_size))
+    for i in range(len(data)):
+        attr[i, data[i, 2]-1] = data[i, 3]
+    return item, rel, attr
+
+
+
+def simple_data_preparation(file):
     """
     Prepare learning data from given csv-file.
     Takes file name written as string.
@@ -86,9 +147,9 @@ def data_preparation(file):
     table = np.array(table)
 
     #define number of dimentions for every learning matrix
-    input_size = max(table[:,0]) + 1
-    relation_in_size = max(table[:,1]) + 1
-    output_size = max(table[:,2]) + 1
+    input_size = np.max(table[:,0]) + 1
+    relation_in_size = np.max(table[:,1]) + 1
+    output_size = np.max(table[:,2]) + 1
 
     # Create learning matrices.
     item = np.zeros((len(table), input_size))

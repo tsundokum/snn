@@ -29,7 +29,7 @@ M = 0.0  # Moment
 e = 1e-4  # value of weights changing in the gradient check function
 epochs_count = 15
 batches_count = 20
-file = 'resources/test-distance-matrix.csv'
+file = 'shugina_orig.csv'
 
 
 # BEGINNING
