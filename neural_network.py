@@ -103,6 +103,20 @@ def data_preparation(file):
     return item, rel, attr
 
 
+def initialize_moment(theta_1, theta_2, theta_relation):
+    """ Initialize start values of moment for every weight"""
+    # First
+    moment_1 = range(len(theta_1))
+    for i in xrange(len(theta_1)):
+        moment_1[i] = np.zeros((np.shape(theta_1[i])))
+    # Second
+    moment_2 = range(len(theta_2))
+    for i in xrange(len(theta_2)):
+        moment_2[i] = np.zeros((np.shape(theta_2[i])))
+    # Relation
+    moment_relation = np.zeros((np.shape(theta_relation)))
+    return moment_1, moment_2, moment_relation
+
 
 def generate_rand_weights_for_subnet(w_struct, epsilon):
     num_lay = len(w_struct) - 1
@@ -245,7 +259,8 @@ def back_propagation(m, a_1, a_2, input_relation, theta_1, theta_2, theta_relati
 
 
 def descent(theta_1, theta_2, theta_relation, gradient_1, gradient_2,
-            gradient_rel, num_lay_1, num_lay_2, alpha):
+            gradient_rel, num_lay_1, num_lay_2, alpha, moment_1, moment_2,
+            moment_relation, M):
     """
     Change matrices of weights according to the gradient.
     Returns:
@@ -256,11 +271,16 @@ def descent(theta_1, theta_2, theta_relation, gradient_1, gradient_2,
     """
     theta_1_temp = range(num_lay_1)
     for i in xrange(num_lay_1):
-        theta_1_temp[i] = theta_1[i] - alpha * gradient_1[i]  # Change weights in the first subnetwork
-    theta_relation_temp = theta_relation - alpha * gradient_rel  # Change relation weights
+        theta_1_temp[i] = (theta_1[i] - alpha*gradient_1[i]) - M*moment_1[i]  # Change weights in the first subnetwork
+    theta_relation_temp = (theta_relation - alpha * gradient_rel) - M*moment_relation # Change relation weights
     theta_2_temp = range(num_lay_2 + 1)
     for i in xrange(num_lay_2 + 1):
-        theta_2_temp[i] = theta_2[i] - alpha * gradient_2[i]  # Change weights in the second subnetwork
+        theta_2_temp[i] = (theta_2[i] - alpha * gradient_2[i]) - M * moment_2[i]  # Change weights in the second subnetwork
+    # Accumulating moment
+    moment_1 += gradient_1
+    moment_2 += gradient_2
+    moment_relation += gradient_rel
+
     return theta_1_temp, theta_2_temp, theta_relation_temp
 
 
@@ -367,13 +387,14 @@ def gradient_check(e, m, X, Y, input_relation, theta_1, theta_2, theta_relation,
 def verify_gradient(gradient_1, gradient_2, gradient_rel, numgrad_1, numgrad_2, numgrad_rel):
     """ Show maximum difference between grdients for every weight matrix"""
     diff_1 = range(len(gradient_1))
-    for i in range(len(gradient_1)):
+    for i in xrange(len(gradient_1)):
         diff_1[i] = np.max(np.abs(numgrad_1[i] - gradient_1[i]))
     diff_2 = range(len(gradient_2))
-    for i in range(len(gradient_2)):
+    for i in xrange(len(gradient_2)):
         diff_2[i] = np.max(np.abs(numgrad_2[i] - gradient_2[i]))
     diff_rel = np.max(np.abs(numgrad_rel - gradient_rel))
     print "differences in the first subnetwork: ",diff_1
     print "difference in the relation subnetwork: ",diff_rel
     print "differences in the second subnetwork: ",diff_2
+
 

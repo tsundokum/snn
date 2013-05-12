@@ -11,8 +11,8 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
-# import os
-# os.chdir('C:/SNN/temp')
+import os
+os.chdir('C:/SNN/temp')
 import numpy as np
 import neural_network
 import csv
@@ -25,6 +25,7 @@ hidden_2 = [10]  # Structure of the second subnetwork
 epsilon = 0.2  # Limitation of  initial eights
 alpha = 0.1  # Learning rate
 R = 0.2  # Coefficient of regularization
+M = 0.1  # Moment
 e = 1e-4  # value of weights changing in the gradient check function
 epochs_count = 100
 batches_count = 1
@@ -53,7 +54,7 @@ output_size = np.size(Y, 1)  # Number of attributes
 num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
 num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
 J = np.zeros((epochs_count, batches_count))
-
+# theta_history =
 # Data division (optional):
 # ...
 
@@ -69,6 +70,10 @@ J = np.zeros((epochs_count, batches_count))
 #  Create 3 sets of matrices of initial weights according to the given structure.
 [theta_1, theta_2, theta_relation] = neural_network.initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
                                                                        output_size, num_lay_1, num_lay_2, epsilon)
+
+#  Create initial moment for every weight
+[moment_1, moment_2, moment_relation] = neural_network.initialize_moment(theta_1,theta_2,theta_relation)
+
 
 for epoch in range(epochs_count):  # Beginning of epoch loop
 
@@ -95,7 +100,14 @@ for epoch in range(epochs_count):  # Beginning of epoch loop
         # Change matrices of weights according to the gradient.
         [theta_1_temp, theta_2_temp, theta_relation_temp] = neural_network.descent(theta_1, theta_2, theta_relation,
                                                                                    gradient_1, gradient_2, gradient_rel,
-                                                                                   num_lay_1, num_lay_2, alpha)
+                                                                                   num_lay_1, num_lay_2, alpha, moment_1,
+                                                                                   moment_2, moment_relation, M)
+
+
+        """# Save weights values
+        theta_1_temp = theta_history[epoch, batch][0]
+        theta_2_temp = theta_history[epoch, batch][1]
+        theta_relation_temp = theta_history[epoch, batch][2]"""
 
         # Update current weight matrices
         theta_1 = theta_1_temp
@@ -103,10 +115,10 @@ for epoch in range(epochs_count):  # Beginning of epoch loop
         theta_2 = theta_2_temp
 
 print "Errors by epochs = %s" % J.sum(1)
-
+"""
 # Gradient verification
 [numgrad_1, numgrad_2, numgrad_rel] = neural_network.gradient_check(e, m, X, Y,
         input_relation, theta_1, theta_2, theta_relation, num_lay_1, num_lay_2, R)
 
 neural_network.verify_gradient(gradient_1, gradient_2, gradient_rel, numgrad_1,
-        numgrad_2, numgrad_rel)
+        numgrad_2, numgrad_rel)"""
