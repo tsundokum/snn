@@ -45,23 +45,26 @@ Useful variables:
 import numpy as np
 import csv
 
-def sigmoid(z):
+def sigmoid(z, S):
     """Compute sigmoid function for given number z."""
-    return 1 / (1.0 + np.exp(-z))
+    return 1 / (1.0 + np.exp(-S*z))
 
 
-def sigmoid_gradient(z):
+def sigmoid_gradient(z, S):
     """Compute partial derivative of sigmoid function with respect to value z"""
-    q = sigmoid(z)
+    q = sigmoid(z, S)
     return q * (1 - q)
 
-def data_preparation(file):
+
+# Function to prepare full(complex) training examples
+def complex_data_preparation(file):
     """
     Prepare learning data from given csv-file (comma separated).
     Takes file name written as string.
     Returns matrixes in format: number of examples by number of dimensions.
-    Every row in the matrix represents one learning example in which the
+    Every row in input matrix represents one learning example in which the
     corresponding number equals one and others are zero.
+    (Matrix for attributes contains all information for the current input pair!)
     Returns:
         ----
         item: learning matrix for items (array)
@@ -77,45 +80,34 @@ def data_preparation(file):
     infile.close()
 
     # Create data matrix
-    data = np.zeros((768,4))
-    # Fill the first column with numbers of items
-    for i in xrange(4):
-        data[i*192:(i+1)*192, 0] = i + 1
-    # Fill the second column with numbers of relations
-        tab = data[i*192:(i+1)*192]
-        for j in xrange(4):
-            tab[j*48:(j+1)*48, 1] = j + 1
-        data[i*192:(i+1)*192] =  tab
-    # Fill the third column with numbers of attributes
-    for i in xrange(16):
-        tab = data[i*48:(i+1)*48]
-        for j in range(48):
-            tab[j, 2] = j + 1
-        data[i*48:(i+1)*48] = tab
+    data = range(768)
     # Fill the fourth column with connection value
     for i in xrange(4):
         for j in xrange(192):
-            data[j + 192*i,3] = table[j][i+2]
+            data[j + 192*i] = table[j][i+2]
     del table
 
     #define number of dimentions for every learning matrix
-    input_size = np.max(data[:,0])
-    relation_in_size = np.max(data[:,1])
-    output_size = np.max(data[:,2])
+    input_size = 4
+    relation_in_size = 4
+    output_size = 48
+    m = input_size * relation_in_size # number of original examples
 
-    # Create learning matrices.
-    item = np.zeros((len(data), input_size))
-    for i in range(len(data)):
-        item[i, data[i, 0]-1] = 1
-    rel = np.zeros((len(data), relation_in_size))
-    for i in range(len(data)):
-        rel[i, data[i, 1]-1] = 1
-    attr = np.zeros((len(data), output_size))
-    for i in range(len(data)):
-        attr[i, data[i, 2]-1] = data[i, 3]
+    # Create item learning matrix
+    item = np.zeros((m, input_size))
+    for i in xrange(input_size):
+        item[i*input_size:(i+1)*input_size, i] = 1
+    # Create relation learning matrix
+    rel = np.zeros((m, relation_in_size))
+    for j in xrange(input_size):
+        for i in xrange(relation_in_size):
+            rel[j*input_size+i, i] = 1
+    # Create attribute learning matrix
+    attr = np.zeros((m, output_size))
+    for i in xrange(m):
+        attr[i] = data[i*output_size:(i+1)*output_size]
+
     return item, rel, attr
-
-
 
 def simple_data_preparation(file):
     """
@@ -164,12 +156,15 @@ def simple_data_preparation(file):
     return item, rel, attr
 
 
-def initialize_moment(theta_1, theta_2, theta_relation):
+def initialize_moment(num_lay_1, theta_1, theta_2, theta_relation):
     """ Initialize start values of moment for every weight"""
     # First
-    moment_1 = range(len(theta_1))
-    for i in xrange(len(theta_1)):
-        moment_1[i] = np.zeros((np.shape(theta_1[i])))
+    moment_1 = range(num_lay_1)
+    if num_lay_1 == 1:   # One layer condition
+        moment_1 = np.zeros((np.shape(theta_1)))
+    else:
+        for i in xrange(num_lay_1):
+            moment_1[i] = np.zeros((np.shape(theta_1[i])))
     # Second
     moment_2 = range(len(theta_2))
     for i in xrange(len(theta_2)):
@@ -185,7 +180,10 @@ def generate_rand_weights_for_subnet(w_struct, epsilon):
     for i in xrange(num_lay):  # loop over the layers of the first subnetwork
         # matrix with random values from (-1 * epsilon) to (1 * epsilon)
         theta[i] = (np.random.rand(w_struct[i] + 1, w_struct[i + 1]) * 2 - 1) * epsilon
+    if num_lay == 1:        # Special condition for one layer subnetwork
+        theta = theta[0]
     return theta
+
 
 def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
                        output_size, num_lay_1, num_lay_2, epsilon):
@@ -209,7 +207,7 @@ def initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
     return theta_1, theta_2, theta_relation
 
 
-def forward_propagation(m, num_lay_1, num_lay_2, X, input_relation, theta_1,
+def forward_propagation(S, m, num_lay_1, num_lay_2, X, input_relation, theta_1,
                         theta_2, theta_relation):
     """
     Compute activations of every unit in the network.
@@ -223,9 +221,13 @@ def forward_propagation(m, num_lay_1, num_lay_2, X, input_relation, theta_1,
     a_1 = range(num_lay_1 + 1)
     z_1[0] = X  # input data
     a_1[0] = np.hstack((np.ones((m, 1)), z_1[0]))  # add bias units
-    for i in xrange(1, num_lay_1 + 1):  # loop over the first subnetwork
-        z_1[i] = np.dot(a_1[i - 1], theta_1[i - 1])  # perform matrix multiplication to compute sum for every unit
-        a_1[i] = np.hstack((np.ones((m, 1)), sigmoid(z_1[i])))  # compute sigmoid function and add bias units
+    if num_lay_1 == 1:    # Special condition for one layer subnetwork
+        z_1[1] = z_1[1] = np.dot(a_1[0], theta_1)
+        a_1[1] = np.hstack((np.ones((m, 1)), sigmoid(z_1[1], S)))
+    else:
+        for i in xrange(1, num_lay_1 + 1):  # loop over the first subnetwork
+            z_1[i] = np.dot(a_1[i - 1], theta_1[i - 1])  # perform matrix multiplication to compute sum for every unit
+            a_1[i] = np.hstack((np.ones((m, 1)), sigmoid(z_1[i], S)))  # compute sigmoid function and add bias units
 
     # Second subnetwork:
     z_2 = range(num_lay_2 + 1)
@@ -233,10 +235,10 @@ def forward_propagation(m, num_lay_1, num_lay_2, X, input_relation, theta_1,
     rel_input_b = np.hstack((np.ones((m, 1)), input_relation))          # add bias term to the relation input,
     # a_1[-1] already have bias
     z_2[0] = np.dot(a_1[-1], theta_2[0]) + np.dot(rel_input_b, theta_relation)  # first layer in the second subnetwork
-    a_2[0] = np.hstack((np.ones((m, 1)), sigmoid(z_2[0])))
+    a_2[0] = np.hstack((np.ones((m, 1)), sigmoid(z_2[0], S)))
     for i in xrange(1, num_lay_2 + 1):                   # loop over the other layers of the second subnetwork
         z_2[i] = np.dot(a_2[i - 1], theta_2[i])
-        a_2[i] = np.hstack((np.ones((m, 1)), sigmoid(z_2[i])))
+        a_2[i] = np.hstack((np.ones((m, 1)), sigmoid(z_2[i], S)))
     a_2[-1] = a_2[-1][:, 1:]                             # remove bias unit from the last(output) layer
     return a_1, a_2
 
@@ -252,8 +254,11 @@ def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
     # Average cost
     cost = np.sum(-Y * np.log(a_2[-1]) - (1 - Y) * np.log(1 - a_2[-1])) / m
     # Regularization
-    for i in xrange(num_lay_1):
-        reg_1 = np.sum(theta_1[i][:, 1:] ** 2)
+    if num_lay_1 == 1:
+        reg_1 = np.sum(theta_1[:, 1:] ** 2)
+    else:
+        for i in xrange(num_lay_1):
+            reg_1 = np.sum(theta_1[i][:, 1:] ** 2)
     reg_relation = np.sum(theta_relation[:, 1:] ** 2)
     for i in xrange(num_lay_2 + 1):
         reg_2 = np.sum(theta_2[i][:, 1:] ** 2)
@@ -262,7 +267,7 @@ def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
     return J
 
 
-def back_propagation(m, a_1, a_2, input_relation, theta_1, theta_2, theta_relation,
+def back_propagation(S, m, a_1, a_2, input_relation, theta_1, theta_2, theta_relation,
                      num_lay_1, num_lay_2, R, Y):
     """
     Compute derivative of the cost function with respect to matrices theta.
@@ -276,30 +281,39 @@ def back_propagation(m, a_1, a_2, input_relation, theta_1, theta_2, theta_relati
                 to error of the relevant neurons (array)
     """
     # Errors of neurons in th second subnetwork
-    d_2 = range(num_lay_2 + 1)
-    rel_input_b = np.hstack((np.ones((m, 1)), input_relation))
-    d_2[-1] = a_2[-1] - Y
+    d_2 = range(num_lay_2 + 1) # storage for delta values in the second subnet
+    rel_input_b = np.hstack((np.ones((m, 1)), input_relation)) # add bias to the relation input
+    d_2[-1] = a_2[-1] - Y    # compute error for the output layer
     for i in xrange(2, num_lay_2 + 1):
         d_2[-i] = np.dot(d_2[-i + 1], theta_2[-i + 1][1:, :].T) * \
-                  sigmoid_gradient(np.dot(a_2[-i - 1], theta_2[-i]))
+                  sigmoid_gradient(np.dot(a_2[-i - 1], theta_2[-i]), S)
     d_2[0] = np.dot(d_2[1], theta_2[1][1:, :].T) * \
-             (sigmoid_gradient(np.dot(a_1[-1], theta_2[0])) +
-             sigmoid_gradient(np.dot(rel_input_b, theta_relation)))
+             sigmoid_gradient(np.dot(a_1[-1], theta_2[0]), S) * \
+             sigmoid_gradient(np.dot(rel_input_b, theta_relation), S)   # changed + for *
     # Errors of neurons in th first subnetwork
     d_1 = range(num_lay_1)
-    d_1[-1] = np.dot(d_2[0], theta_2[0][1:, :].T) * \
-              sigmoid_gradient(np.dot(a_1[-2], theta_1[-1]))
-    for i in xrange(2, num_lay_1 + 1):
-        d_1[-i] = np.dot(d_1[-i + 1], theta_1[-i + 1][1:, :].T) * \
-                  sigmoid_gradient(np.dot(a_1[-i - 1], theta_1[-i]))
+    if num_lay_1 == 1:
+        d_1 = np.dot(d_2[0], theta_2[0][1:, :].T) * \
+                sigmoid_gradient(np.dot(a_1[-2], theta_1), S)
+    else:
+        d_1[-1] = np.dot(d_2[0], theta_2[0][1:, :].T) * \
+                  sigmoid_gradient(np.dot(a_1[-2], theta_1[-1]), S)
+        for i in xrange(2, num_lay_1 + 1):
+            d_1[-i] = np.dot(d_1[-i + 1], theta_1[-i + 1][1:, :].T) * \
+                      sigmoid_gradient(np.dot(a_1[-i - 1], theta_1[-i]), S)
 
     # Gradient with regularization for the weights in the first subnetwork
     grad_1 = range(num_lay_1)
     grad_reg_1 = range(num_lay_1)
-    for i in xrange(num_lay_1):
-        grad_1[i] = np.dot(a_1[i].T, d_1[i])  # gradient
-        grad_reg_1[i] = grad_1[i] / m + R * theta_1[i] / m  # regularization term
-        grad_reg_1[i][0, :] = grad_1[i][0, :] / m  # exclude weights of the bias unit
+    if num_lay_1 == 1:      # One layer condition
+        grad_1 = np.dot(a_1[0].T, d_1)  # gradient
+        grad_reg_1 = grad_1 / m + R * theta_1 / m  # regularization term
+        grad_reg_1[0, :] = grad_1[0, :] / m  # exclude weights of the bias unit
+    else:
+        for i in xrange(num_lay_1):
+            grad_1[i] = np.dot(a_1[i].T, d_1[i])  # gradient
+            grad_reg_1[i] = grad_1[i] / m + R * theta_1[i] / m  # regularization term
+            grad_reg_1[i][0, :] = grad_1[i][0, :] / m  # exclude weights of the bias unit
 
     # Gradient with regularization for the weights in relation weights matrix
     rel_grad = np.dot(rel_input_b.T, d_2[0])
@@ -331,8 +345,11 @@ def descent(theta_1, theta_2, theta_relation, gradient_1, gradient_2,
         theta_relation_temp: new theta matrix for relation weights (array)
     """
     theta_1_temp = range(num_lay_1)
-    for i in xrange(num_lay_1):
-        theta_1_temp[i] = (theta_1[i] - alpha*gradient_1[i]) - M*moment_1[i]  # Change weights in the first subnetwork
+    if num_lay_1 == 1:
+        theta_1_temp = (theta_1 - alpha*gradient_1) - M*moment_1 # Change weights in the first subnetwork
+    else:
+        for i in xrange(num_lay_1):
+            theta_1_temp[i] = (theta_1[i] - alpha*gradient_1[i]) - M*moment_1[i] # Change weights in the first subnetwork
     theta_relation_temp = (theta_relation - alpha * gradient_rel) - M*moment_relation # Change relation weights
     theta_2_temp = range(num_lay_2 + 1)
     for i in xrange(num_lay_2 + 1):
@@ -345,7 +362,7 @@ def descent(theta_1, theta_2, theta_relation, gradient_1, gradient_2,
     return theta_1_temp, theta_2_temp, theta_relation_temp
 
 
-def gradient_check(e, m, X, Y, input_relation, theta_1, theta_2, theta_relation,
+def gradient_check(S, e, m, X, Y, input_relation, theta_1, theta_2, theta_relation,
                    num_lay_1, num_lay_2, R):
     """
     Computes the numerical gradient of the function around theta for every weight.
@@ -360,33 +377,59 @@ def gradient_check(e, m, X, Y, input_relation, theta_1, theta_2, theta_relation,
     """
     # Estimation for the first subnetwork:
     numgrad_1 = range(num_lay_1)
-    for i in xrange(num_lay_1):  # loop over the weight matrices in the first subnetwork
-        numgrad_1[i] = np.zeros(
-            (np.shape(theta_1[i])))  # structure which will contain estimation of the gradient for every weight
-        perturb = np.zeros(
-            (np.shape(theta_1[i])))  # this structure we will use to change weights in the original matrix
-        for p in xrange(np.size(theta_1[i])):  # loop over all of the elements in the current weight matrix
+    # One layer case
+    if num_lay_1 == 1:
+        numgrad_1 = np.zeros((np.shape(theta_1)))
+        perturb = np.zeros((np.shape(theta_1)))
+        for p in xrange(np.size(theta_1)):  # loop over all of the elements in the current weight matrix
             perturb.flat[p] = e  # change only one element per cycle, the others still equal zero
-            th_ch_minus = theta_1[:]
-            th_ch_plus = theta_1[:]
-            th_ch_minus[i] = theta_1[i] - perturb  # create weight matrices with one weight changed
-            th_ch_plus[i] = theta_1[i] + perturb
+            th_ch_minus = theta_1 - perturb  # create weight matrices with one weight changed
+            th_ch_plus = theta_1 + perturb
             # Compute "minus" error:
-            [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2, X,
+            [a_chm_1, a_chm_2] = forward_propagation(S, m, num_lay_1, num_lay_2, X,
                                                      input_relation, th_ch_minus, theta_2,
                                                      theta_relation)      # perform forward propagation with new weight
             j_ch_minus = compute_cost_function(m, a_chm_2, th_ch_minus, theta_2,
                                                theta_relation, num_lay_1, num_lay_2, R,
                                                Y)     # compute  new cost function
             # Compute "plus" error:
-            [a_chp_1, a_chp_2] = forward_propagation(m, num_lay_1, num_lay_2, X,
+            [a_chp_1, a_chp_2] = forward_propagation(S, m, num_lay_1, num_lay_2, X,
                                                      input_relation, th_ch_plus, theta_2,
                                                      theta_relation)  # perform forward propagation with new weight
             j_ch_plus = compute_cost_function(m, a_chp_2, th_ch_plus, theta_2,
                                               theta_relation, num_lay_1, num_lay_2, R,
                                               Y)         # compute  new cost function
-            numgrad_1[i].flat[p] = (j_ch_plus - j_ch_minus) / (2 * e)   # numerical estimation for one particular weight
+            numgrad_1.flat[p] = (j_ch_plus - j_ch_minus) / (2 * e)   # numerical estimation for one particular weight
             perturb.flat[p] = 0                                         # prepare "perturb" for the further computations
+    # Multi layer case
+    else:
+        for i in xrange(num_lay_1):  # loop over the weight matrices in the first subnetwork
+            numgrad_1[i] = np.zeros(
+                (np.shape(theta_1[i])))  # structure which will contain estimation of the gradient for every weight
+            perturb = np.zeros(
+                (np.shape(theta_1[i])))  # this structure we will use to change weights in the original matrix
+            for p in xrange(np.size(theta_1[i])):  # loop over all of the elements in the current weight matrix
+                perturb.flat[p] = e  # change only one element per cycle, the others still equal zero
+                th_ch_minus = theta_1[:]
+                th_ch_plus = theta_1[:]
+                th_ch_minus[i] = theta_1[i] - perturb  # create weight matrices with one weight changed
+                th_ch_plus[i] = theta_1[i] + perturb
+                # Compute "minus" error:
+                [a_chm_1, a_chm_2] = forward_propagation(S, m, num_lay_1, num_lay_2, X,
+                                                         input_relation, th_ch_minus, theta_2,
+                                                         theta_relation)      # perform forward propagation with new weight
+                j_ch_minus = compute_cost_function(m, a_chm_2, th_ch_minus, theta_2,
+                                                   theta_relation, num_lay_1, num_lay_2, R,
+                                                   Y)     # compute  new cost function
+                # Compute "plus" error:
+                [a_chp_1, a_chp_2] = forward_propagation(S, m, num_lay_1, num_lay_2, X,
+                                                         input_relation, th_ch_plus, theta_2,
+                                                         theta_relation)  # perform forward propagation with new weight
+                j_ch_plus = compute_cost_function(m, a_chp_2, th_ch_plus, theta_2,
+                                                  theta_relation, num_lay_1, num_lay_2, R,
+                                                  Y)         # compute  new cost function
+                numgrad_1[i].flat[p] = (j_ch_plus - j_ch_minus) / (2 * e)   # numerical estimation for one particular weight
+                perturb.flat[p] = 0                                         # prepare "perturb" for the further computations
 
     # Estimation for the relation matrix:
     numgrad_rel = np.zeros((np.shape(theta_relation)))  # structure which will contain estimation
@@ -398,14 +441,14 @@ def gradient_check(e, m, X, Y, input_relation, theta_1, theta_2, theta_relation,
         th_ch_minus = theta_relation - perturb  # create weight matrices with one weight changed
         th_ch_plus = theta_relation + perturb
         # Compute "minus" error:
-        [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2, X,
+        [a_chm_1, a_chm_2] = forward_propagation(S, m, num_lay_1, num_lay_2, X,
                                                  input_relation, theta_1, theta_2,
                                                  th_ch_minus)          # perform forward propagation with new weight
         j_ch_minus = compute_cost_function(m, a_chm_2, theta_1, theta_2,
                                            th_ch_minus, num_lay_1, num_lay_2, R,
                                            Y)                # compute  new cost function
         # Compute "plus" error:
-        [a_chp_1, a_chp_2] = forward_propagation(m, num_lay_1, num_lay_2, X,
+        [a_chp_1, a_chp_2] = forward_propagation(S, m, num_lay_1, num_lay_2, X,
                                                  input_relation, theta_1, theta_2,
                                                  th_ch_plus)       # perform forward propagation with new weight
         j_ch_plus = compute_cost_function(m, a_chp_2, theta_1, theta_2,
@@ -428,13 +471,13 @@ def gradient_check(e, m, X, Y, input_relation, theta_1, theta_2, theta_relation,
             th_ch_minus[i] = theta_2[i] - perturb  # create weight matrices with one weight changed
             th_ch_plus[i] = theta_2[i] + perturb
             # Compute "minus" error:
-            [a_chm_1, a_chm_2] = forward_propagation(m, num_lay_1, num_lay_2, X,
+            [a_chm_1, a_chm_2] = forward_propagation(S, m, num_lay_1, num_lay_2, X,
                                                      input_relation, theta_1, th_ch_minus,
                                                      theta_relation)   # perform forward propagation with new weight
             j_ch_minus = compute_cost_function(m, a_chm_2, theta_1, th_ch_minus, # compute  new cost function
                                                theta_relation, num_lay_1, num_lay_2, R, Y)
             # Compute "plus" error:
-            [a_chp_1, a_chp_2] = forward_propagation(m, num_lay_1, num_lay_2, X,
+            [a_chp_1, a_chp_2] = forward_propagation(S, m, num_lay_1, num_lay_2, X,
                                                      input_relation, theta_1, th_ch_plus,
                                                      theta_relation)   # perform forward propagation with new weight
             j_ch_plus = compute_cost_function(m, a_chp_2, theta_1, th_ch_plus, # compute  new cost function
@@ -457,5 +500,69 @@ def verify_gradient(gradient_1, gradient_2, gradient_rel, numgrad_1, numgrad_2, 
     print "differences in the first subnetwork: ",diff_1
     print "difference in the relation subnetwork: ",diff_rel
     print "differences in the second subnetwork: ",diff_2
+
+
+def check_result(example, epoch, file, hidden_1, hidden_2, theta_history, S):
+    """
+    Takes one example from learning data(example) and learned weight matrices
+    from theta_hisory according to the particular epoch of learning.
+    Print output values of the network(res) with respect to attributes(attr_names)
+    and original values(teacher).
+    """
+    # Import data
+    [item, rel, attr] = complex_data_preparation(file)
+    # Assign local variables
+    [theta_1, theta_2, theta_relation] = theta_history[epoch]
+    num_lay_1 = len(hidden_1)
+    num_lay_2 = len(hidden_2)
+    m = 1
+    # Set data
+    X = item[example]
+    input_relation = rel[example]
+    Y = attr[example]
+    # Recognize item input
+    if (X == [1,0,0,0]).all():
+        object = 'Pozharniy'
+    elif (X == [0,1,0,0]).all():
+        object = 'Stas'
+    elif (X == [0,0,1,0]).all():
+        object = 'Vanya'
+    elif (X == [0,0,0,1]).all():
+        object = 'Sergey Sergeich'
+    # Recognize relation input
+    if (input_relation == [1,0,0,0]).all():
+        relation = 'moget'
+    elif (input_relation == [0,1,0,0]).all():
+        relation = 'imeet'
+    elif (input_relation == [0,0,1,0]).all():
+        relation = 'yavlyaetsya'
+    elif (input_relation == [0,0,0,1]).all():
+        relation = 'kakoy'
+
+    # Compute activations of every unit in the network.
+    [a_1, a_2] = forward_propagation(S, m, num_lay_1, num_lay_2,
+                                                    X.reshape(1,4), input_relation.reshape(1,4), theta_1,
+                                                    theta_2, theta_relation)
+    # List of attribute names
+    attr_names = ['tushit pozhar', 'mit mashinu', 'halturit', 'formu', 'brandspoit',
+    'raciyu', 'evgrafichem', 'komandirom', 'predprinimatelem', 'vesyoliy', 'pozhiloy', 'hitriy',
+    'smotryet futbol', 'chinyit mashinu', 'strichsya', 'korotkuyu strizhku', 'vnedorozhnik',
+    'voblu', 'naparnyikon vani', 'dalnoboyshikom', 'bolelshikom', 'dobriy', 'poryadochniy',
+    'krugloliciy', 'prosit prosheniya', 'rabotat s policiyei', 'ugnat furu', 'svyaz s bandoy',
+    'porvanuyu kurtku', 'leviye dengi', 'sinom direktora', 'voditelyem', 'vtyanutim v prestuplyeniye',
+    'nayivniy', 'molodoy', 'doverchiviy', 'szhigat', 'igrat v billiard', 'ugrozhat', 'ochki',
+    'krminalniy bisness', 'grubiy golos', 'prestupnikom', 'bisnessmenom', 'glavaryom',
+    'opasniy', 'rasoblachyonniy', 'zhadniy']
+
+    # transform arrays in lists
+    res = []
+    for i in xrange(np.size((a_2[-1]))):
+        res.append(a_2[-1][0][i])
+    teacher = []
+    for i in xrange(np.size((Y))):
+        teacher.append(Y[i])
+    for i in xrange(len(attr_names)):
+        print object+' '+relation+' '+attr_names[i]+':  '+str(res[i])+' ('+str(teacher[i])+')'
+
 
 
