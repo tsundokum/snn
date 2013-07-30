@@ -125,7 +125,7 @@ def center_window(tk_root):
 
 if __name__ == "__main__":
     convert_to_bags(words_output_file, matrix_output_file)
-    # root = Tk()
-    # app = ScalerApp(root, generate_and_shuffle_propositions_generator())
-    # center_window(root)
-    # root.mainloop()
+    root = Tk()
+    app = ScalerApp(root, generate_and_shuffle_propositions_generator())
+    center_window(root)
+    root.mainloop()
