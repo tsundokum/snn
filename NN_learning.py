@@ -21,13 +21,11 @@ import matplotlib.pyplot as pp
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 from timeit import default_timer as timer
-
 import neural_network
-
 
 # BEGINNING
 def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, e, epochs_count, batches_count,
-        data_proportion, online_learning, file):
+        data_proportion, online_learning, data_representation, file):
     """
     Main learning function.
     Takes given network structure and learning parameters.
@@ -44,16 +42,21 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, e, epochs_count, batches_co
     time_ext = dict()           # Create dictionary to store time values from external block
     time_start_ext = timer()    # Start point for timer in external block
     # Import data from file
-    [item, rel, attr] = neural_network.complex_data_preparation(file)
+    if data_representation == 'complex':
+        [item, rel, attr] = neural_network.complex_data_preparation(file)
+    elif data_representation == 'separate':
+        [item, rel, attr_num, attr_val] = neural_network.separate_data_preparation(file)
+    else:
+        print "data_representation should be 'complex' or 'separate'"
     time = timer()
-    time_ext['data_preparation'] = time - time_start_ext
+    time_ext['data_preparation'] = time - time_start_ext  # run-time of data_preparation()
 
     # Usefull veriables:
     data_size = len(item)
     #m = len(X)                  # Batch size
     input_size = np.size(item, 1)  # Item number
     relation_in_size = np.size(rel, 1)  # Relations number
-    output_size = np.size(attr, 1)  # Number of attributes
+    output_size = 48                    # Number of attributes
     num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
     num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
     # Online condition
@@ -93,7 +96,12 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, e, epochs_count, batches_co
     # Test data set
     test_item_set = item[test_ex_idx]
     test_rel_set = rel[test_ex_idx]
-    test_attr_set = attr[test_ex_idx]
+    if data_representation == 'complex':
+        test_attr_set = attr[test_ex_idx]
+    elif data_representation == 'separate':
+        test_attr_set = range(2)
+        test_attr_set[0] = attr_num[test_ex_idx]
+        test_attr_set[1] = attr_val[test_ex_idx]
     time_ext['variables, data_division'] = timer() - time
     time = timer()    # update timer
 
@@ -113,10 +121,16 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, e, epochs_count, batches_co
         for batch in range(batches_count):  # Beginning of batch loop
             start_batch = timer()
 
+            m = batch_size  # change "m" for batch_size
             X = item[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
             input_relation = rel[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            Y = attr[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            m = len(X)
+            if data_representation == 'complex':
+                Y = attr[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
+            elif data_representation == 'separate':
+                Y = range(2)
+                Y[0] = attr_num[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
+                Y[1] = attr_val[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
+
 
             # Compute activations of every unit in the network.
             [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2,
@@ -126,7 +140,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, e, epochs_count, batches_co
 
             # Compute average error with regularization (training)
             J[epoch * batches_count + batch] = neural_network.compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
-                                                                   num_lay_1, num_lay_2, R, Y)
+                                                                   num_lay_1, num_lay_2, R, Y, data_representation)
             time_cost[epoch, batch] = timer() - time
             time = timer()    # timer update
 
@@ -135,14 +149,14 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, e, epochs_count, batches_co
             [a_test_1, a_test_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2, test_item_set, test_rel_set, theta_1, theta_2, theta_relation)
 
             J_test[epoch * batches_count + batch] = neural_network.compute_cost_function(num_test_ex, a_test_2, theta_1, theta_2, theta_relation,
-                                                                       num_lay_1, num_lay_2, R, test_attr_set)
+                                                                       num_lay_1, num_lay_2, R, test_attr_set, data_representation)
             time_test[epoch, batch] = timer() - time
             time = timer()    # timer update
 
             # Compute derivative of the cost function with respect to matrices theta.
             [gradient_1, gradient_2, gradient_rel] = neural_network.back_propagation(S, m, a_1, a_2, input_relation,
                                                                                      theta_1, theta_2, theta_relation,
-                                                                                     num_lay_1, num_lay_2, R, Y)
+                                                                                     num_lay_1, num_lay_2, R, Y, data_representation)
             time_back_prop[epoch, batch] = timer() - time
             time = timer()    # timer update
 
@@ -163,19 +177,22 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, e, epochs_count, batches_co
 
             time_batch[epoch, batch] = timer() - start_batch    # batch timing
 
+        if data_representation == 'separate':
+            print 'epoch: '+str(epoch)+' / '+str(epochs_count)
         time_epoch[epoch] = timer() - start_epoch        # epoch timing
 
     # Compute final error after all loops of learning (Training)
     [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2, X,
-                                                    input_relation, theta_1, theta_2, theta_relation)
+                                                    input_relation, theta_1, theta_2,theta_relation)
     J[-1] = neural_network.compute_cost_function(m, a_2, theta_1, theta_2,
-                                                 theta_relation, num_lay_1, num_lay_2, R, Y)
+                                                 theta_relation, num_lay_1,
+                                                 num_lay_2, R, Y, data_representation)
 
     # Compute final real error (Test)
     [a_1, a_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2,
                                                     test_item_set, test_rel_set, theta_1, theta_2, theta_relation)
     J_test[-1] = neural_network.compute_cost_function(num_test_ex, a_2, theta_1, theta_2, theta_relation,
-                                                    num_lay_1, num_lay_2, R, test_attr_set)
+                                                    num_lay_1, num_lay_2, R, test_attr_set, data_representation)
     time_int.append(time_batch)
     time_int.append(time_epoch)
 
@@ -306,7 +323,7 @@ def disp_struct_analysis(J_SA, hidden_1_max, hidden_2_max):
     pp.show()
 
 
-def hidden_activation(item_num, rel_num, num_lay_1, num_lay_2, theta_history, iter):
+def hidden_activation(item_num, rel_num, num_lay_1, num_lay_2, theta_history, iter, S):
     """ Computes activations of every unit for one particular iteration"""
     theta_1 = theta_history[iter][0]
     theta_2 = theta_history[iter][1]
@@ -327,7 +344,7 @@ def hidden_activation(item_num, rel_num, num_lay_1, num_lay_2, theta_history, it
             input_relation = np.zeros((1,4))
             input_relation.flat[rel] = 1
             # perform forward propagation
-            [a_1, a_2] = neural_network.forward_propagation(1, num_lay_1, num_lay_2, X,
+            [a_1, a_2] = neural_network.forward_propagation(S, 1, num_lay_1, num_lay_2, X,
                     input_relation, theta_1, theta_2, theta_relation)
             activation_1[it][rel] = a_1[1]
             activation_2[it][rel] = a_2

@@ -13,7 +13,7 @@ Common:
   +  -Make large-set version(?)
   +  -Saving parameters
     -Prepare working version and readme
-  +  -GitHub
+##  +  -GitHub
     -rewrite SNN as class
 
 Optimisation:
@@ -47,24 +47,26 @@ os.chdir('C:/SNN/complex_ver')
 #np.random.seed(111)
 
 # Parameters:
-hidden_1 = [5]  # Structure of the first subnetwork
-hidden_2 = [5]  # Structure of the second subnetwork
-epsilon = 0.9  # Limitation of  initial weights
-alpha = 0.5  # Learning rate
-S = 1.5   # Slope of the sigmoid function
+hidden_1 = [7]  # Structure of the first subnetwork
+hidden_2 = [7]  # Structure of the second subnetwork
+epsilon = 0.1  # Limitation of  initial weights
+alpha = 1  # Learning rate
+S = 2   # Slope of the sigmoid function
 R = 0.0  # Coefficient of regularization
-M = 0.0  # Momentum
+M = 0.8  # Momentum
 e = 1e-4  # value of weights changing in the gradient check function
-epochs_count = 10
+epochs_count = 500
 batches_count = 1
 data_proportion = 0.3
 online_learning = '' # Set 'on' to turn on online learing (one example per iteration)
+data_representation = 'separate'  # Representation of lerning data, 'complex' or 'separate'
 file = 'ilashevskaya.csv'
 
 start = timer()
 [J, J_test, theta_history, time_ext, time_int] = NN_learning.SNN(hidden_1, hidden_2,
                                                  epsilon, alpha, S, R, M, e, epochs_count,
-                                                 batches_count, data_proportion, online_learning, file)
+                                                 batches_count, data_proportion, online_learning,
+                                                 data_representation, file)
 print timer() - start
 
 # Visualization
@@ -72,8 +74,8 @@ NN_learning.disp_learning_dynamic(J, J_test)
 print min(J), min(J_test)
 
 # Check result of learning
-example = 7
-epoch = 1000
+example = 10
+epoch = 199
 neural_network.check_result(example, epoch, file, hidden_1, hidden_2, theta_history, S)
 
 # NET STRUCTURE ANALYSIS
@@ -127,17 +129,17 @@ NN_learning.disp_struct_analysis(J_SA, hidden_1_max, hidden_2_max)
 ##pp.show()
 ##
 ### Dynamic of activations and weight values during learning
-##act_1 = range(len(theta_history))
-##act_2 = range(len(theta_history))
-##for i in range(len(theta_history)):
-##    iter = i
-##    [act_1[i], act_2[i]] = NN_learning.hidden_activation(4, 4, len(hidden_1), len(hidden_2), theta_history, iter)
-##
-##for i in xrange(len(theta_history)):
-##    print  np.mean(theta_history[i][1][0])
-##
-##for i in xrange(len(theta_history)):
-##    print np.mean(act_2[i][0][0][1])
+act_1 = range(len(theta_history))
+act_2 = range(len(theta_history))
+for i in range(len(theta_history)):
+    iter = i
+    [act_1[i], act_2[i]] = NN_learning.hidden_activation(4, 4, len(hidden_1), len(hidden_2), theta_history, iter, S)
+
+for i in xrange(len(theta_history)):
+    print  np.mean(theta_history[i][1][0])
+
+for i in xrange(len(theta_history)):
+    print np.mean(act_2[i][0][0][0])
 ##
 ##
 ##

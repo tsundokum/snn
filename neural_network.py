@@ -60,6 +60,7 @@ def sigmoid_gradient(z, S):
 def complex_data_preparation(file):
     """
     Prepare learning data from given csv-file (comma separated).
+    ((Represent data in 16 examples))
     Takes file name written as string.
     Returns matrixes in format: number of examples by number of dimensions.
     Every row in input matrix represents one learning example in which the
@@ -109,9 +110,12 @@ def complex_data_preparation(file):
 
     return item, rel, attr
 
-def simple_data_preparation(file):
+
+# Function to prepare partial(separate) training examples
+def separate_data_preparation(file):
     """
-    Prepare learning data from given csv-file.
+    Prepare learning data from given csv-file (comma separated).
+    ((Represent data in 768 examples))
     Takes file name written as string.
     Returns matrixes in format: number of examples by number of dimensions.
     Every row in the matrix represents one learning example in which the
@@ -120,7 +124,8 @@ def simple_data_preparation(file):
         ----
         item: learning matrix for items (array)
         rel: learning matrix for ralations (array)
-        attr: learning matrix for attributes (array)
+        attr_num: numbers of activated attribute neurons (array)
+        attr_val: activatation value of activated attribute neurons (array)
 
     """
     # Extract data from file as list of strings
@@ -130,30 +135,46 @@ def simple_data_preparation(file):
         table.append(row)
     infile.close()
 
-    # Transform lists of strings into array of floats and integers
-    for r in range(len(table)):
-        for c in range(3):
-            table[r][c] = int(table[r][c])
-    for r in range(len(table)):
-        table[r][3] = float(table[r][3])
-    table = np.array(table)
+    # Create data matrix
+    data = np.zeros((768,4))
+    # Fill the first column with numbers of items
+    for i in xrange(4):
+        data[i*192:(i+1)*192, 0] = i + 1
+    # Fill the second column with numbers of relations
+        tab = data[i*192:(i+1)*192]
+        for j in xrange(4):
+            tab[j*48:(j+1)*48, 1] = j + 1
+        data[i*192:(i+1)*192] =  tab
+    # Fill the third column with numbers of attributes
+    for i in xrange(16):
+        tab = data[i*48:(i+1)*48]
+        for j in range(48):
+            tab[j, 2] = j + 1
+        data[i*48:(i+1)*48] = tab
+    # Fill the fourth column with connection value
+    for i in xrange(4):
+        for j in xrange(192):
+            data[j + 192*i,3] = table[j][i+2]
+    del table
 
     #define number of dimentions for every learning matrix
-    input_size = np.max(table[:,0]) + 1
-    relation_in_size = np.max(table[:,1]) + 1
-    output_size = np.max(table[:,2]) + 1
+    input_size = int(np.max(data[:,0]))
+    relation_in_size = int(np.max(data[:,1]))
+    output_size = int(np.max(data[:,2]))
 
     # Create learning matrices.
-    item = np.zeros((len(table), input_size))
-    for i in range(len(table)):
-        item[i][table[i][0]] = 1
-    rel = np.zeros((len(table), relation_in_size))
-    for i in range(len(table)):
-        rel[i][table[i][1]] = 1
-    attr = np.zeros((len(table), output_size))
-    for i in range(len(table)):
-        attr[i][table[i][0]] = table[i][3]
-    return item, rel, attr
+    item = np.zeros((len(data), input_size))
+    for i in range(len(data)):
+        item[i, data[i, 0]-1] = 1
+    rel = np.zeros((len(data), relation_in_size))
+    for i in range(len(data)):
+        rel[i, data[i, 1]-1] = 1
+    attr_num = np.zeros((len(data),1), dtype = 'int8')
+    attr_val = np.zeros((len(data),1))
+    for i in xrange(len(data)):
+        attr_num[i] = data[i, 2] - 1
+        attr_val[i] = data[i, 3]
+    return item, rel, attr_num, attr_val
 
 
 def initialize_moment(num_lay_1, theta_1, theta_2, theta_relation):
@@ -244,7 +265,7 @@ def forward_propagation(S, m, num_lay_1, num_lay_2, X, input_relation, theta_1,
 
 
 def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
-                          num_lay_1, num_lay_2, R, Y):
+                          num_lay_1, num_lay_2, R, Y, data_representation):
     """
     Compute average error with regularization.
     Returns:
@@ -252,7 +273,15 @@ def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
         J: approximate error (float)
     """
     # Average cost
-    cost = np.sum(-Y * np.log(a_2[-1]) - (1 - Y) * np.log(1 - a_2[-1])) / m
+    cost = 0
+    if data_representation == 'complex':
+        cost = np.sum(-Y * np.log(a_2[-1]) - (1 - Y) * np.log(1 - a_2[-1])) / m
+    elif data_representation == 'separate':
+        for i in xrange(m):  # loop over the examples in the batch
+            cost_ex = -Y[1][i] * np.log(a_2[-1][i][Y[0][i]]) - (1 - Y[1][i]) * \
+                      np.log(1 - a_2[-1][i][Y[0][i]])
+            cost = cost + cost_ex  # cost accumulation
+        cost = cost / m
     # Regularization
     if num_lay_1 == 1:
         reg_1 = np.sum(theta_1[:, 1:] ** 2)
@@ -268,7 +297,7 @@ def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
 
 
 def back_propagation(S, m, a_1, a_2, input_relation, theta_1, theta_2, theta_relation,
-                     num_lay_1, num_lay_2, R, Y):
+                     num_lay_1, num_lay_2, R, Y, data_representation):
     """
     Compute derivative of the cost function with respect to matrices theta.
     Returns:
@@ -281,9 +310,15 @@ def back_propagation(S, m, a_1, a_2, input_relation, theta_1, theta_2, theta_rel
                 to error of the relevant neurons (array)
     """
     # Errors of neurons in th second subnetwork
-    d_2 = range(num_lay_2 + 1) # storage for delta values in the second subnet
     rel_input_b = np.hstack((np.ones((m, 1)), input_relation)) # add bias to the relation input
-    d_2[-1] = a_2[-1] - Y    # compute error for the output layer
+    d_2 = range(num_lay_2 + 1)        # storage for delta values in the second subnet
+    # compute error for the output layer
+    if data_representation =='complex':
+        d_2[-1] = a_2[-1] - Y
+    elif data_representation == 'separate':
+        d_2[-1] = np.zeros((np.shape(a_2[-1])))
+        for i in xrange(m):           # loop over the examples in the batch
+            d_2[-1][i][Y[0][i]] = a_2[-1][i][Y[0][i]] - Y[1][i]
     for i in xrange(2, num_lay_2 + 1):
         d_2[-i] = np.dot(d_2[-i + 1], theta_2[-i + 1][1:, :].T) * \
                   sigmoid_gradient(np.dot(a_2[-i - 1], theta_2[-i]), S)
