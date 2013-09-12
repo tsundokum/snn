@@ -11,6 +11,8 @@
 # Copyright:   (c) 11 2013
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
+import codecs
+
 """
 Contains functions to create and learn McClelland's neural network.
 
@@ -112,7 +114,7 @@ def complex_data_preparation(file):
 
 
 # Function to prepare partial(separate) training examples
-def separate_data_preparation(file):
+def separate_data_preparation2(file):
     """
     Prepare learning data from given csv-file (comma separated).
     ((Represent data in 768 examples))
@@ -124,8 +126,7 @@ def separate_data_preparation(file):
         ----
         item: learning matrix for items (array)
         rel: learning matrix for ralations (array)
-        attr_num: numbers of activated attribute neurons (array)
-        attr_val: activatation value of activated attribute neurons (array)
+        attr: learning matrix for attributes (array)
 
     """
     # Extract data from file as list of strings
@@ -175,6 +176,51 @@ def separate_data_preparation(file):
         attr_num[i] = data[i, 2] - 1
         attr_val[i] = data[i, 3]
     return item, rel, attr_num, attr_val
+
+# Function to prepare partial(separate) training examples
+def separate_data_preparation(file_name):
+    """
+    Prepare learning data from given csv-file (comma separated).
+    ((Represent data in 768 examples))
+    Takes file name written as string.
+    Returns matrixes in format: number of examples by number of dimensions.
+    Every row in the matrix represents one learning example in which the
+    corresponding number equals one and others are zero.
+    Returns:
+        ----
+        item: learning matrix for items (array)
+        rel: learning matrix for ralations (array)
+        attr: learning matrix for attributes (array)
+
+    """
+    # Extract data from file as list of strings
+    table = []
+    with codecs.open(file_name, 'rb', 'utf-8') as infile:
+        for line in infile:
+            row = [x.replace(u'\ufeff','').strip() for x in line.split(',')]
+            table.append(row)
+
+    m = len(table)
+
+    items = [row[0] for row in table]
+    uniq_items = sorted(set(items))
+    item_indexi = [uniq_items.index(it) for it in items]
+    item_matrix = np.zeros((m, len(uniq_items)), dtype="int")
+    item_matrix[np.arange(m), item_indexi] = 1
+
+    relations = [row[1] for row in table]
+    uniq_relations = sorted(set(relations))
+    relations_indexi = [uniq_relations.index(rel) for rel in relations]
+    relation_matrix = np.zeros((m, len(uniq_relations)), dtype="int")
+    relation_matrix[np.arange(m), relations_indexi] = 1
+
+    attrs = [row[2] for row in table]
+    uniq_attrs = sorted(set(attrs))
+    attr_indexi = np.array([uniq_attrs.index(at) for at in attrs], dtype="int")[:, np.newaxis]
+
+    attr_values = np.array([float(row[3]) for row in table])[:, np.newaxis]
+
+    return item_matrix, relation_matrix, attr_indexi, attr_values
 
 
 def initialize_moment(num_lay_1, theta_1, theta_2, theta_relation):
@@ -277,10 +323,10 @@ def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
     if data_representation == 'complex':
         cost = np.sum(-Y * np.log(a_2[-1]) - (1 - Y) * np.log(1 - a_2[-1])) / m
     elif data_representation == 'separate':
-        for i in xrange(m):  # loop over the examples in the batch
+        for i in xrange(m):
             cost_ex = -Y[1][i] * np.log(a_2[-1][i][Y[0][i]]) - (1 - Y[1][i]) * \
                       np.log(1 - a_2[-1][i][Y[0][i]])
-            cost = cost + cost_ex  # cost accumulation
+            cost = cost + cost_ex
         cost = cost / m
     # Regularization
     if num_lay_1 == 1:
