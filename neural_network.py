@@ -640,10 +640,12 @@ def check_result(example, epoch, file, hidden_1, hidden_2, theta_history, S):
     for i in xrange(np.size((a_2[-1]))):
         res.append(a_2[-1][0][i])
     teacher = []
+    check_result = []
     for i in xrange(np.size((Y))):
         teacher.append(Y[i])
     for i in xrange(len(attr_names)):
-        print object+' '+relation+' '+attr_names[i]+':  '+str(res[i])+' ('+str(teacher[i])+')'
+        check_result.append(object+' '+relation+' '+attr_names[i]+':  '+str(res[i])+' ('+str(teacher[i])+')')
+    return '\n'.join(check_result)
 
 
 

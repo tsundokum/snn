@@ -30,51 +30,53 @@ from mpl_toolkits.mplot3d import Axes3D
 from timeit import default_timer as timer
 import os
 
-os.chdir('C:\\SNN\\temp')
+os.chdir('c:\SNN\protoGUI')
+
 import neural_network
 import NN_learning
 
 np.random.seed(111)
 
 # Parameters:
-hidden_1 = [5]  # Structure of the first subnetwork
-hidden_2 = [5]  # Structure of the second subnetwork
-epsilon = 0.5  # Limitation of  initial weights
+hidden_1 = [3]  # Structure of the first subnetwork
+hidden_2 = [4]  # Structure of the second subnetwork
+epsilon = 1  # Limitation of  initial weights
 alpha = 1  # Learning rate
-S = 2   # Slope of the sigmoid function
+S = 1   # Slope of the sigmoid function
 R = 0.0  # Coefficient of regularization
 M = 0.0  # Momentum
 e = 1e-4  # value of weights changing in the gradient check function
-number_of_epochs = 3
+number_of_epochs = 37
 number_of_batches = 1
-data_proportion = 0.3
+data_proportion = 0.0
 online_learning = '' # Set 'on' to turn on online learing (one example per iteration)
 data_representation = 'separate'  # Representation of lerning data, 'complex' or 'separate'
 file = 'C:/SNN/temp/ilashevskaya.csv'
-
-
-# Data preprocessing
-[item, rel, attr, batch_size,
-training_ex_idx, test_item_set,
-test_rel_set, test_attr_set] = NN_learning.Prepare_Learning(epsilon, number_of_epochs,
-                                                           number_of_batches, data_proportion,
-                                                           online_learning, data_representation, file)
-
-# Learning
-[J, J_test, theta_history] = NN_learning.Learning(alpha, R, S, M, hidden_1, hidden_2,
-                                                  epsilon, batch_size, item, rel, attr,
-                                                  data_representation, number_of_epochs,
-                                                  number_of_batches, training_ex_idx,
-                                                  test_item_set, test_rel_set, test_attr_set)
-
 
 
 start = timer()
 [J, J_test, theta_history, time_ext, time_int] = NN_learning.SNN(hidden_1, hidden_2,
                                                  epsilon, alpha, S, R, M, number_of_epochs,
                                                  number_of_batches, data_proportion, online_learning,
-                                                 data_representation, file)
+                                                 data_representation, file, gauge)
 print timer() - start
+
+
+# Data preprocessing
+[item, rel, attr, batch_size,
+ number_of_batches, training_ex_idx,
+ test_item_set, test_rel_set, test_attr_set] = NN_learning.Prepare_Learning(epsilon, number_of_epochs,
+                                                                            number_of_batches, data_proportion,
+                                                                            online_learning, data_representation, file)
+
+# Learning
+[J, J_test, theta_history] = NN_learning.Learning(alpha, R, S, M, hidden_1, hidden_2,
+                                                  epsilon, batch_size, item, rel, attr,
+                                                  data_representation, data_proportion,
+                                                  number_of_epochs, number_of_batches,
+                                                  training_ex_idx, test_item_set,
+                                                  test_rel_set, test_attr_set)
+
 
 # Visualization
 NN_learning.disp_learning_dynamic(J, J_test)
@@ -82,25 +84,24 @@ print min(J), min(J_test)
 
 # Check result of learning
 example = 0
-epoch = 25001
-neural_network.check_result(example, epoch, file, hidden_1, hidden_2, theta_history, S)
-
+epoch = 1
+check_results = neural_network.check_result(example, epoch, file, hidden_1,
+                                            hidden_2, theta_history, S)
+print check_results
 
 # NET STRUCTURE ANALYSIS
 
 hidden_1_max = 3
 hidden_2_max = 3
-num_init = 3      # number of random initializations
+num_init = 2      # number of random initializations
 
-start = timer()
-
-[SA_train, SA_train_of,
-SA_test, SA_test_of] = NN_learning.Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
-                                                      hidden_1, hidden_2, epsilon, alpha, S, R, M,
-                                                      number_of_epochs, number_of_batches, data_proportion,
-                                                      online_learning, data_representation, file)
-
-print timer() - start
+##start = timer()
+##[SA_train, SA_train_of,
+##SA_test, SA_test_of] = NN_learning.Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
+##                                                      hidden_1, hidden_2, epsilon, alpha, S, R, M,
+##                                                      number_of_epochs, number_of_batches, data_proportion,
+##                                                      online_learning, data_representation, file)
+##print timer() - start
 
 [SA_train,SA_train_of,
 SA_test, SA_test_of] = NN_learning.cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
@@ -109,17 +110,39 @@ SA_test, SA_test_of] = NN_learning.cut_Structure_Analysis(hidden_1_max, hidden_2
                                                           online_learning, data_representation, file)
 
 
+
+# current configuration
+cfg = dict(epsilon=epsilon, alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
+           number_of_batches=number_of_batches, data_proportion=data_proportion,
+           online_learning=online_learnivng, file=file, hidden_1_max=hidden_1_max,
+           hidden_2_max=hidden_2_max, num_init=num_init)
+
+csv_opt = 'False'
+
 # Saving
-np.savetxt('SA/StructAn[h1max='+str(hidden_1_max)+', '+ \
-                             'h2max='+str(hidden_2_max)+', '+ \
-                             'Ninit='+str(num_init)+']_'+file, J_SA, delimiter=',')
+file_name = 'aaaarrrrghh!!!'
+NN_learning.save_SA_results(SA_train, SA_train_of, SA_test, SA_test_of, cfg, file_name, csv_opt)
+
+##np.savetxt('SA/StructAn[h1max='+str(hidden_1_max)+', '+ \
+##                             'h2max='+str(hidden_2_max)+', '+ \
+##                             'Ninit='+str(num_init)+']_'+file, J_SA, delimiter=',')
 
 # Load SA-results
-SA_file = 'SA/StructAn[h1max=2, h2max=3, Ninit=2]_ilashevskaya.csv'
-loaded_J_SA = NN_learning.Load_SA_results(SA_file)
-
-# Visualization
-NN_learning.disp_struct_analysis(SA_test, hidden_1_max, hidden_2_max)
+file = 'eeee'
+f = open(file, 'r')
+J_SA = pickle.load(f)
+[SA_train, SA_train_of, SA_test, SA_test_of] = J_SA
+##
+##
+##
+##SA_file = 'SA/StructAn[h1max=2, h2max=3, Ninit=2]_ilashevskaya.csv'
+##loaded_J_SA = NN_learning.Load_SA_results(SA_file)
+##
+##
+##
+##
+### Visualization
+##NN_learning.disp_struct_analysis(SA_test)
 
 
 
@@ -147,17 +170,17 @@ NN_learning.disp_struct_analysis(SA_test, hidden_1_max, hidden_2_max)
 ##pp.show()
 ##
 ### Dynamic of activations and weight values during learning
-act_1 = range(len(theta_history))
-act_2 = range(len(theta_history))
-for i in range(len(theta_history)):
-    iter = i
-    [act_1[i], act_2[i]] = NN_learning.hidden_activation(4, 4, len(hidden_1), len(hidden_2), theta_history, iter, S)
-
-for i in xrange(len(theta_history)):
-    print  np.mean(theta_history[i][1][0])
-
-for i in xrange(len(theta_history)):
-    print np.mean(act_2[i][0][0][0])
+##act_1 = range(len(theta_history))
+##act_2 = range(len(theta_history))
+##for i in range(len(theta_history)):
+##    iter = i
+##    [act_1[i], act_2[i]] = NN_learning.hidden_activation(4, 4, len(hidden_1), len(hidden_2), theta_history, iter, S)
+##
+##for i in xrange(len(theta_history)):
+##    print  np.mean(theta_history[i][1][0])
+##
+##for i in xrange(len(theta_history)):
+##    print np.mean(act_2[i][0][0][0])
 ##
 ##
 ##
@@ -205,3 +228,6 @@ for i in xrange(len(theta_history)):
 ##ax.plot(activation_red[1][1][:,0][0], activation_red[1][1][:,1][0], lw=1, ls='-', marker='o', markersize=4)
 ##
 ##pp.show()
+
+
+
