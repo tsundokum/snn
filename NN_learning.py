@@ -82,7 +82,7 @@ def Prepare_Learning(epsilon, number_of_epochs, number_of_batches,
 
 # Learning
 def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
-             attr, data_representation, data_proportion, number_of_epochs, number_of_batches,
+             attr, data_representation, data_proportion, cost_function, number_of_epochs, number_of_batches,
              training_ex_idx, test_item_set, test_rel_set, test_attr_set):
     """
     Perform learning with given parameters.
@@ -142,14 +142,14 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
                                                             X, input_relation, theta_1, theta_2, theta_relation)
 
             # Compute average error with regularization (training)
-            J[epoch * number_of_batches + batch] = neural_network.compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
+            J[epoch * number_of_batches + batch] = neural_network.compute_cost_function(cost_function, m, a_2, theta_1, theta_2, theta_relation,
                                                                    num_lay_1, num_lay_2, R, Y, data_representation)
 
             if data_proportion != 0:
                 # Compute real error (test)
                 [a_test_1, a_test_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2, test_item_set, test_rel_set, theta_1, theta_2, theta_relation)
 
-                J_test[epoch * number_of_batches + batch] = neural_network.compute_cost_function(num_test_ex, a_test_2, theta_1, theta_2, theta_relation,
+                J_test[epoch * number_of_batches + batch] = neural_network.compute_cost_function(cost_function, num_test_ex, a_test_2, theta_1, theta_2, theta_relation,
                                                                            num_lay_1, num_lay_2, R, test_attr_set, data_representation)
 
             # Compute derivative of the cost function with respect to matrices theta.
@@ -176,14 +176,14 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
     # Compute final error after all loops of learning (Training)
     [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2, X,
                                                     input_relation, theta_1, theta_2,theta_relation)
-    J[-1] = neural_network.compute_cost_function(m, a_2, theta_1, theta_2,
+    J[-1] = neural_network.compute_cost_function(cost_function, m, a_2, theta_1, theta_2,
                                                  theta_relation, num_lay_1,
                                                  num_lay_2, R, Y, data_representation)
     if data_proportion != 0:
         # Compute final real error (Test)
         [a_1, a_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2,
                                                         test_item_set, test_rel_set, theta_1, theta_2, theta_relation)
-        J_test[-1] = neural_network.compute_cost_function(num_test_ex, a_2, theta_1, theta_2, theta_relation,
+        J_test[-1] = neural_network.compute_cost_function(cost_function, num_test_ex, a_2, theta_1, theta_2, theta_relation,
                                                         num_lay_1, num_lay_2, R, test_attr_set, data_representation)
 
     return J, J_test, theta_history
@@ -191,7 +191,7 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
 
 # BEGINNING
 def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of_batches,
-        data_proportion, online_learning, data_representation, file, gauge):
+        data_proportion, online_learning, data_representation, cost_function, file, gauge):
     """
     Main learning function.
     Takes given network structure and learning parameters.
@@ -307,7 +307,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
             time_forward_prop[epoch, batch] = time - start_batch
 
             # Compute average error with regularization (training)
-            J[epoch * number_of_batches + batch] = neural_network.compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
+            J[epoch * number_of_batches + batch] = neural_network.compute_cost_function(cost_function, m, a_2, theta_1, theta_2, theta_relation,
                                                                    num_lay_1, num_lay_2, R, Y, data_representation)
             time_cost[epoch, batch] = timer() - time
             time = timer()    # timer update
@@ -319,7 +319,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
                                                                           test_rel_set, theta_1, theta_2,
                                                                           theta_relation)
 
-                J_test[epoch * number_of_batches + batch] = neural_network.compute_cost_function(num_test_ex, a_test_2, theta_1,
+                J_test[epoch * number_of_batches + batch] = neural_network.compute_cost_function(cost_function, num_test_ex, a_test_2, theta_1,
                                                                                                  theta_2, theta_relation, num_lay_1,
                                                                                                  num_lay_2, R, test_attr_set,
                                                                                                  data_representation)
@@ -359,7 +359,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
     # Compute final error after all loops of learning (Training)
     [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2, X,
                                                     input_relation, theta_1, theta_2,theta_relation)
-    J[-1] = neural_network.compute_cost_function(m, a_2, theta_1, theta_2,
+    J[-1] = neural_network.compute_cost_function(cost_function, m, a_2, theta_1, theta_2,
                                                  theta_relation, num_lay_1,
                                                  num_lay_2, R, Y, data_representation)
 
@@ -367,7 +367,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
         # Compute final real error (Test)
         [a_1, a_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2,
                                                         test_item_set, test_rel_set, theta_1, theta_2, theta_relation)
-        J_test[-1] = neural_network.compute_cost_function(num_test_ex, a_2, theta_1, theta_2, theta_relation,
+        J_test[-1] = neural_network.compute_cost_function(cost_function, num_test_ex, a_2, theta_1, theta_2, theta_relation,
                                                         num_lay_1, num_lay_2, R, test_attr_set, data_representation)
     time_int.append(time_batch)
     time_int.append(time_epoch)
@@ -386,7 +386,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
 # NET STRUCTURE ANALYSIS
 
 def Rand_Inits(num_init, alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size,
-               item, rel, attr, data_representation, data_proportion, number_of_epochs,
+               item, rel, attr, data_representation, data_proportion, cost_function, number_of_epochs,
                number_of_batches, training_ex_idx, test_item_set, test_rel_set, test_attr_set):
     """
     Perform internal loops of the Stucture_Analysis function.
@@ -407,7 +407,7 @@ def Rand_Inits(num_init, alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size
     for init in range(num_init):         # Loop over the random initializations
         [J, J_test, theta_history] = Learning(alpha, R, S, M, hidden_1, hidden_2,
                                                           epsilon, batch_size, item, rel, attr,
-                                                          data_representation, data_proportion,
+                                                          data_representation, data_proportion, cost_function,
                                                           number_of_epochs, number_of_batches,
                                                           training_ex_idx, test_item_set, test_rel_set,
                                                           test_attr_set)
@@ -422,7 +422,7 @@ def Rand_Inits(num_init, alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size
 def cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
                            hidden_1, hidden_2, epsilon, alpha, S, R, M,
                            number_of_epochs, number_of_batches, data_proportion,
-                           online_learning, data_representation, file):
+                           online_learning, data_representation, cost_function, file):
     """
     Optimised structure analysis function (internal loops in separate function)
     Returns: matrixes of errors hidden_1 x hidden_2 (array)
@@ -453,7 +453,7 @@ def cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
             [train_init, train_init_of,
              test_init, test_init_of] = Rand_Inits(num_init, alpha, R, S, M, hidden_1, hidden_2,
                                                    epsilon, batch_size, item, rel, attr,
-                                                   data_representation, data_proportion,
+                                                   data_representation, data_proportion, cost_function,
                                                    number_of_epochs, number_of_batches,
                                                    training_ex_idx, test_item_set,
                                                    test_rel_set, test_attr_set)
@@ -478,7 +478,7 @@ def cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
 def Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
                        hidden_1, hidden_2, epsilon, alpha, S, R, M,
                        number_of_epochs, number_of_batches, data_proportion,
-                       online_learning, data_representation, file):
+                       online_learning, data_representation, cost_function, file):
     """
     Computes efficiency of network with respect to number of neurons in every layer
     (Only for one-layer subnetworks).
@@ -521,7 +521,7 @@ def Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
             for init in range(num_init):         # Loop over the random initializations
                 [J, J_test, theta_history] = Learning(alpha, R, S, M, hidden_1, hidden_2,
                                                                   epsilon, batch_size, item, rel, attr,
-                                                                  data_representation, data_proportion,
+                                                                  data_representation, data_proportion, cost_function,
                                                                   number_of_epochs, number_of_batches,
                                                                   training_ex_idx, test_item_set,
                                                                   test_rel_set, test_attr_set)
@@ -684,10 +684,12 @@ def PCA(X,k):
 
 
 def SA(alpha, R, S, M, epsilon, batch_size, item, rel, attr, data_representation,
-       data_proportion, number_of_epochs, number_of_batches, training_ex_idx,
-       test_item_set, test_rel_set, test_attr_set, hidden_1_max, hidden_2_max, num_init):
+       data_proportion, cost_function, number_of_epochs, number_of_batches, training_ex_idx,
+       test_item_set, test_rel_set, test_attr_set, hidden_1_range, hidden_2_range, num_init):
 
     # Prepare arrays to fill with error values
+    hidden_1_max = (hidden_1_range[1] + 1) - hidden_1_range[0]  # maximum range of neurons in every subnet
+    hidden_2_max = (hidden_2_range[1] + 1) - hidden_2_range[0]
     SA = np.zeros((hidden_1_max, hidden_2_max))
     average_theta = range(hidden_1_max)
     for i in xrange(len(average_theta)):
@@ -697,12 +699,12 @@ def SA(alpha, R, S, M, epsilon, batch_size, item, rel, attr, data_representation
             average_theta[i][j][1] = [0,0]
     performance_time = 0
 
-    for i in range(hidden_2_max):      # Loop over the hidden layer
-        hidden_2 = [i+1]                 # Set number of neurons in the second layer(hidden)
+    for i in range(hidden_2_range[0], hidden_2_range[1] + 1):      # Loop over the hidden layer
+        hidden_2 = [i]                 # Set number of neurons in the second layer(hidden)
 
-        for j in range(hidden_1_max):  # Loop over  the representaton layer
+        for j in range(hidden_1_range[0], hidden_1_range[1] + 1):  # Loop over  the representaton layer
             start = timer()
-            hidden_1 = [j+1]             # Set number of neurons in the first layer(representation)
+            hidden_1 = [j]             # Set number of neurons in the first layer(representation)
             # epmpty lists for random init-s errors
             init_error = []
             theta_accumulator = [0] * 3
@@ -712,7 +714,7 @@ def SA(alpha, R, S, M, epsilon, batch_size, item, rel, attr, data_representation
             for init in range(num_init):
                 [J, J_test, theta_history] = Learning(alpha, R, S, M, hidden_1, hidden_2,
                                                       epsilon, batch_size, item, rel, attr,
-                                                      data_representation, data_proportion,
+                                                      data_representation, data_proportion, cost_function,
                                                       number_of_epochs, number_of_batches,
                                                       training_ex_idx, test_item_set, test_rel_set,
                                                       test_attr_set)
@@ -731,17 +733,19 @@ def SA(alpha, R, S, M, epsilon, batch_size, item, rel, attr, data_representation
                     theta_accumulator[1][1] += theta_history[-1][1][1]
                     theta_accumulator[2] += theta_history[-1][2]
 
+            r_idx = hidden_1[0] - hidden_1_range[0]
+            c_idx = hidden_2[0] - hidden_2_range[0]
             # average error value
-            SA[j, i] = np.average(init_error)
+            SA[r_idx, c_idx] = np.average(init_error)  # fill the surface of errors
             # average theta matrices
-            average_theta[j][i][0] = theta_accumulator[0] / num_init
-            average_theta[j][i][1][0] = theta_accumulator[1][0] / num_init
-            average_theta[j][i][1][1] = theta_accumulator[1][1] / num_init
-            average_theta[j][i][2] = theta_accumulator[2] / num_init
+            average_theta[r_idx][c_idx][0] = theta_accumulator[0] / num_init
+            average_theta[r_idx][c_idx][1][0] = theta_accumulator[1][0] / num_init
+            average_theta[r_idx][c_idx][1][1] = theta_accumulator[1][1] / num_init
+            average_theta[r_idx][c_idx][2] = theta_accumulator[2] / num_init
             time_per_loop = timer() - start
             # average number of the best iteration
             if data_proportion != 0:
-                average_iter = np.average(Iterations)
+                average_iter = round(np.average(Iterations))
             else:
                 average_iter = number_of_epochs * number_of_batches
 
@@ -755,14 +759,15 @@ def SA(alpha, R, S, M, epsilon, batch_size, item, rel, attr, data_representation
             print 'approximate ramaining time :'+str(hours)+' hours  '+ \
                    str(minutes)+' minutes  '+str(seconds)+' seconds'
             # Show progress
-            print 'hidden 1: '+str(hidden_1[0])+'/'+str(hidden_1_max)+'   '+  \
-                  'hidden 2: '+str(hidden_2[0])+'/'+str(hidden_2_max)
+            print 'hidden 1: '+str(hidden_1[0])+'/'+str(hidden_1_range[1])+'   '+  \
+                  'hidden 2: '+str(hidden_2[0])+'/'+str(hidden_2_range[1])
 
     return SA, average_theta, average_iter
 
+
 def save_SA(file_name, test, best_iter, SA, average_theta):
     # error surface
-    f = open(file_name+'_SA'+'_('+str(best_iter)+')'+'_'+test+'.pkl', 'wb')
+    f = open(file_name+'_SA_surf'+'_('+str(best_iter)+')'+'_'+test+'.pkl', 'wb')
     pickle.dump(SA, f)
     f.close()
     # theta matrices

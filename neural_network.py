@@ -310,24 +310,31 @@ def forward_propagation(S, m, num_lay_1, num_lay_2, X, input_relation, theta_1,
     return a_1, a_2
 
 
-def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
-                          num_lay_1, num_lay_2, R, Y, data_representation):
-    """
-    Compute average error with regularization.
-    Returns:
-        ----
-        J: approximate error (float)
-    """
+def least_squares(m, a_2, Y, data_representation):
+    """ Compute least-squares cost function"""
+    if data_representation == 'complex':
+        cost = np.sum((a_2[-1] - Y) ** 2) / m
+    elif data_representation == 'separate':
+        cost = 0
+        for i in xrange(m):
+            cost += (a_2[-1][i][Y[0][i]] - Y[1][i]) ** 2
+        cost /= m
+    return cost
+
+
+def cross_entropy(m, a_2, theta_1, theta_2, theta_relation,
+                  num_lay_1, num_lay_2, R, Y, data_representation):
+    """ Compute cross-entropy cost function"""
     # Average cost
-    cost = 0
     if data_representation == 'complex':
         cost = np.sum(-Y * np.log(a_2[-1]) - (1 - Y) * np.log(1 - a_2[-1])) / m
     elif data_representation == 'separate':
+        cost = 0
         for i in xrange(m):
             cost_ex = -Y[1][i] * np.log(a_2[-1][i][Y[0][i]]) - (1 - Y[1][i]) * \
                       np.log(1 - a_2[-1][i][Y[0][i]])
-            cost = cost + cost_ex
-        cost = cost / m
+            cost += cost_ex
+        cost /= m
     # Regularization
     if num_lay_1 == 1:
         reg_1 = np.sum(theta_1[:, 1:] ** 2)
@@ -339,6 +346,22 @@ def compute_cost_function(m, a_2, theta_1, theta_2, theta_relation,
         reg_2 = np.sum(theta_2[i][:, 1:] ** 2)
     regularization = (reg_1 + reg_2 + reg_relation) * (R / (2 * m))
     J = cost + regularization
+    return J
+
+
+def compute_cost_function(cost_function, m, a_2, theta_1, theta_2, theta_relation,
+                          num_lay_1, num_lay_2, R, Y, data_representation):
+    """
+    Compute average error.
+    Returns:
+        ----
+        J: approximate error (float)
+    """
+    if cost_function == 'least_squares':
+        J = least_squares(m, a_2, Y, data_representation)
+    elif cost_function == 'cross_entropy':
+        J = cross_entropy(m, a_2, theta_1, theta_2, theta_relation,
+                          num_lay_1, num_lay_2, R, Y, data_representation)
     return J
 
 
@@ -439,6 +462,92 @@ def descent(theta_1, theta_2, theta_relation, gradient_1, gradient_2,
     moment_1 += gradient_1
     moment_2 += gradient_2
     moment_relation += gradient_rel
+
+    return theta_1_temp, theta_2_temp, theta_relation_temp
+
+
+def compute_jacobian(S, m, a_1, a_2, input_relation, theta_1, theta_2, theta_relation,
+                     num_lay_1, num_lay_2, R, Y, data_representation):
+    """
+    Compute partial derivatives with respect to weigths "theta"
+    according to every example in the training set.
+    """
+    if num_lay_1 == 1:  # condition for one-layer subnet
+        jacobian_1 = np.zeros((m, np.size(theta_1)))
+    else:
+        jacobian_1 = []
+        for theta in theta_1:
+            jacobian_1.append(np.zeros((m, np.size(theta))))
+    jacobian_2 = []
+    for theta in theta_2:
+        jacobian_2.append(np.zeros((m, np.size(theta))))
+    jacobian_rel = np.zeros((m, np.size(theta_relation)))
+    # loop over examples in the set
+    for i in xrange(m):
+        #  Take parameters of the given example
+        a_1ch = []
+        for a in a_1:   # loop over the layers
+            a_1ch.append(a[i].reshape(1, np.size(a, 1)))
+        a_2ch = []
+        for a in a_2:   # loop over the layers
+            a_2ch.append(a[i].reshape(1, np.size(a, 1)))
+        in_rel = input_relation[i].reshape(1, np.size(input_relation, 1))
+        if  data_representation == 'separate':
+            y = [Y[0][i], Y[1][i]]
+        else:
+            y = Y[i].reshape(1, np.size(Y, 1))
+        [gradient_1, gradient_2,
+         gradient_rel] = back_propagation(S, 1, a_1ch, a_2ch, in_rel, theta_1,
+                                                         theta_2, theta_relation, num_lay_1,
+                                                         num_lay_2, R, y, data_representation)
+        # filling jacobian matrices for the first subnet:
+        if num_lay_1 == 1:
+            jacobian_1[i, :] = gradient_1.flatten()
+        else:
+            for j in xrange(len(theta_1)):
+                jacobian_1[j][i, :] = gradient_1[j].flatten()
+        # for the second subnet
+        for j in xrange(len(theta_2)):
+            jacobian_2[j][i, :] = gradient_2[j].flatten()
+        jacobian_rel[i, :] = gradient_rel.flatten()
+
+    return jacobian_1, jacobian_2, jacobian_rel
+
+
+def delta_LMA(jacobian, L):
+    """ Computes weiths changes for according to
+        Levenberg-Markwardt algorithm"""
+    hessian = np.dot(jacobian.T,jacobian)
+    diagonal = np.diag(hessian)
+    invert = np.linalg.pinv(hessian + (L * diagonal))
+    changes = np.dot(jacobian, invert)
+    changes = np.mean(changes, 0)
+    return changes
+
+
+def LMA_optimisation(jacobian_1, jacobian_2, jacobian_rel, L, theta_1, theta_2, theta_relation):
+    """
+    Change weights according to the given jacobian-matrices
+    """
+    # Compute weights changes for the first subnet
+    if  not isinstance(theta_1, list):
+        delta_1 = delta_LMA(jacobian_1, L).reshape(np.shape(theta_1))  #  for one-layer subnet
+        theta_1_temp = theta_1 - delta_1
+    else:
+        delta_1 = range(len(theta_1))
+        theta_1_temp = range(len(theta_1))
+        for j in range(len(theta_2)):
+            delta_1[j] = delta_LMA(jacobian_1[j], L).reshape(np.shape(theta_1[j]))  # for multi-layer subnet
+            theta_1_temp[j] = theta_1[j] - delta_1[j]
+    # Compute weights changes for the second subnet
+    delta_2 = range(len(theta_2))
+    theta_2_temp = range(len(theta_2))
+    for j in range(len(theta_2)):
+        delta_2[j] = delta_LMA(jacobian_2[j], L).reshape(np.shape(theta_2[j]))
+        theta_2_temp[j] = theta_2[j] - delta_2[j]
+    # Changes for relation weights
+    delta_rel = delta_LMA(jacobian_rel, L).reshape(np.shape(theta_relation))
+    theta_relation_temp = theta_relation - delta_rel
 
     return theta_1_temp, theta_2_temp, theta_relation_temp
 

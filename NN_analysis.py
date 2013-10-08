@@ -40,25 +40,26 @@ np.random.seed(111)
 # Parameters:
 hidden_1 = [3]  # Structure of the first subnetwork
 hidden_2 = [4]  # Structure of the second subnetwork
-epsilon = 1  # Limitation of  initial weights
+epsilon = 0.5  # Limitation of  initial weights
 alpha = 1  # Learning rate
 S = 1   # Slope of the sigmoid function
 R = 0.0  # Coefficient of regularization
 M = 0.0  # Momentum
 e = 1e-4  # value of weights changing in the gradient check function
-number_of_epochs = 37
+number_of_epochs = 10
 number_of_batches = 1
-data_proportion = 0.0
-online_learning = '' # Set 'on' to turn on online learing (one example per iteration)
-data_representation = 'separate'  # Representation of lerning data, 'complex' or 'separate'
+data_proportion = 0.25
+online_learning = 'on' # Set 'on' to turn on online learing (one example per iteration)
+data_representation = 'complex'  # Representation of lerning data, 'complex' or 'separate'
+cost_function = 'least_squares'
 file = 'C:/SNN/temp/ilashevskaya.csv'
 
-
+gauge = 0
 start = timer()
 [J, J_test, theta_history, time_ext, time_int] = NN_learning.SNN(hidden_1, hidden_2,
                                                  epsilon, alpha, S, R, M, number_of_epochs,
                                                  number_of_batches, data_proportion, online_learning,
-                                                 data_representation, file, gauge)
+                                                 data_representation, cost_function, file, gauge)
 print timer() - start
 
 
