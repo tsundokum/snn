@@ -123,6 +123,7 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
     [moment_1, moment_2, moment_relation] = neural_network.initialize_moment(num_lay_1, theta_1, theta_2, theta_relation)
 
     for epoch in range(number_of_epochs):  # Beginning of epoch loop
+        training_ex_idx = np.random.permutation(training_ex_idx)
 
         for batch in range(number_of_batches):  # Beginning of batch loop
 
@@ -285,6 +286,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
 
     for epoch in range(number_of_epochs):  # Beginning of epoch loop
         start_epoch = timer()
+        training_ex_idx = np.random.permutation(training_ex_idx)
 
         for batch in range(number_of_batches):  # Beginning of batch loop
             start_batch = timer()

@@ -55,7 +55,7 @@ def sigmoid(z, S):
 def sigmoid_gradient(z, S):
     """Compute partial derivative of sigmoid function with respect to value z"""
     q = sigmoid(z, S)
-    return q * (1 - q)
+    return S * q * (1 - q)
 
 
 # Function to prepare full(complex) training examples
@@ -310,7 +310,7 @@ def forward_propagation(S, m, num_lay_1, num_lay_2, X, input_relation, theta_1,
     return a_1, a_2
 
 
-def least_squares(m, a_2, Y, data_representation):
+def mean_squares(m, a_2, Y, data_representation):
     """ Compute least-squares cost function"""
     if data_representation == 'complex':
         cost = np.sum((a_2[-1] - Y) ** 2) / m
@@ -357,8 +357,8 @@ def compute_cost_function(cost_function, m, a_2, theta_1, theta_2, theta_relatio
         ----
         J: approximate error (float)
     """
-    if cost_function == 'least_squares':
-        J = least_squares(m, a_2, Y, data_representation)
+    if cost_function == 'mean_squares':
+        J = mean_squares(m, a_2, Y, data_representation)
     elif cost_function == 'cross_entropy':
         J = cross_entropy(m, a_2, theta_1, theta_2, theta_relation,
                           num_lay_1, num_lay_2, R, Y, data_representation)

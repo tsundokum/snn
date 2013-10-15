@@ -30,7 +30,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from timeit import default_timer as timer
 import os
 
-os.chdir('c:\SNN\protoGUI')
+os.chdir('c:\SNN\SA')
 
 import neural_network
 import NN_learning
@@ -38,29 +38,29 @@ import NN_learning
 np.random.seed(111)
 
 # Parameters:
-hidden_1 = [3]  # Structure of the first subnetwork
-hidden_2 = [4]  # Structure of the second subnetwork
+hidden_1 = [4]  # Structure of the first subnetwork
+hidden_2 = [5]  # Structure of the second subnetwork
 epsilon = 0.5  # Limitation of  initial weights
 alpha = 1  # Learning rate
 S = 1   # Slope of the sigmoid function
 R = 0.0  # Coefficient of regularization
 M = 0.0  # Momentum
 e = 1e-4  # value of weights changing in the gradient check function
-number_of_epochs = 10
+number_of_epochs = 600
 number_of_batches = 1
 data_proportion = 0.25
 online_learning = 'on' # Set 'on' to turn on online learing (one example per iteration)
-data_representation = 'complex'  # Representation of lerning data, 'complex' or 'separate'
-cost_function = 'least_squares'
-file = 'C:/SNN/temp/ilashevskaya.csv'
+data_representation = 'separate'  # Representation of lerning data, 'complex' or 'separate'
+cost_function = 'mean_squares'
+file = 'C:/SNN/SA/Learn_data/03.csv'
 
-gauge = 0
-start = timer()
-[J, J_test, theta_history, time_ext, time_int] = NN_learning.SNN(hidden_1, hidden_2,
-                                                 epsilon, alpha, S, R, M, number_of_epochs,
-                                                 number_of_batches, data_proportion, online_learning,
-                                                 data_representation, cost_function, file, gauge)
-print timer() - start
+##gauge = 0
+##start = timer()
+##[J, J_test, theta_history, time_ext, time_int] = NN_learning.SNN(hidden_1, hidden_2,
+##                                                 epsilon, alpha, S, R, M, number_of_epochs,
+##                                                 number_of_batches, data_proportion, online_learning,
+##                                                 data_representation, cost_function, file, gauge)
+##print timer() - start
 
 
 # Data preprocessing
@@ -74,7 +74,7 @@ print timer() - start
 [J, J_test, theta_history] = NN_learning.Learning(alpha, R, S, M, hidden_1, hidden_2,
                                                   epsilon, batch_size, item, rel, attr,
                                                   data_representation, data_proportion,
-                                                  number_of_epochs, number_of_batches,
+                                                  cost_function, number_of_epochs, number_of_batches,
                                                   training_ex_idx, test_item_set,
                                                   test_rel_set, test_attr_set)
 
@@ -84,8 +84,8 @@ NN_learning.disp_learning_dynamic(J, J_test)
 print min(J), min(J_test)
 
 # Check result of learning
-example = 0
-epoch = 1
+example =14
+epoch =1800
 check_results = neural_network.check_result(example, epoch, file, hidden_1,
                                             hidden_2, theta_history, S)
 print check_results
