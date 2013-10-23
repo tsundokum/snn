@@ -8,7 +8,6 @@ INSTALL
 
 Before using make sure that the following components are installed:
 numpy
-PyYAML (see at http://pyyaml.org/wiki/PyYAML)
 
 COMPONENTS
 

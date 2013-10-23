@@ -15,7 +15,7 @@ FINISH_MESSAGE = "Эксперимент окончен. Спасибо!"
 
 random.seed(113)
 
-proposition_words_file = 'resources/RogersMcClelland08_ru.yaml'
+proposition_words_file = 'resources/RogersMcClelland08_ru.json'
 words_output_file = 'resources/test-distances.csv'
 matrix_output_file = 'resources/test-distance-matrix.csv'
 SCALER_DEFAULT_VALUE = 0

@@ -1,0 +1,29 @@
+{
+    "items": ["pine",
+        "oak",
+        "rose",
+        "daisy",
+        "robin",
+        "canary",
+        "sunfish",
+        "salmon"],
+    "relations": [
+        {
+            "attributes": ["living thing", "plant", "animal", "tree", "flower", "bird",
+                "pine", "oak", "rose", "daisy", "robin", "canary", "sunfish", "salmon"],
+            "relation": "ISA"
+        },
+        {
+            "attributes": ["pretty", "tall", "living", "green", "red", "yellow"],
+            "relation": "is"
+        },
+        {
+            "attributes": ["grow", "move", "swim", "fly", "sing"],
+            "relation": "can"
+        },
+        {
+            "attributes": ["bark", "petals", "wings", "feathers", "scales", "gills", "roots", "skin"],
+            "relation": "has"
+        }
+    ]
+}
