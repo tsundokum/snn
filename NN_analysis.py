@@ -19,6 +19,7 @@ Optimisation:
     -Numexpr for multiprocessing perfomance
 
 
+-
 """
 
 import numpy as np
@@ -46,7 +47,7 @@ S = 1   # Slope of the sigmoid function
 R = 0.0  # Coefficient of regularization
 M = 0.0  # Momentum
 e = 1e-4  # value of weights changing in the gradient check function
-number_of_epochs = 600
+number_of_epochs = 10
 number_of_batches = 1
 data_proportion = 0.25
 online_learning = 'on' # Set 'on' to turn on online learing (one example per iteration)
@@ -54,7 +55,29 @@ data_representation = 'separate'  # Representation of lerning data, 'complex' or
 cost_function = 'mean_squares'
 file = 'C:/SNN/SA/Learn_data/03.csv'
 
-##gauge = 0
+
+# BIG set analysis
+
+# load data set
+# Import data from file
+file_dir = 'c:\\SNN\\SA\\Learn_data'
+def big_data_preparation(file_dir):
+    """ Takes directory with origin data files.
+        Returns big data set with assembled origin data."""
+    full_item = []
+    full_rel = []
+    full_attr = []
+    for file in os.listdir(file_dir):
+        [item, rel, attr] = neural_network.complex_data_preparation(file_dir+'/'+file)
+        full_item.append(item)
+        full_rel.append(rel)
+        full_attr.append(attr)
+    full_item = np.vstack((full_item))
+    full_rel = np.vstack((full_rel))
+    full_attr = np.vstack((full_attr))
+    return full_item, full_rel, full_attr
+
+
 ##start = timer()
 ##[J, J_test, theta_history, time_ext, time_int] = NN_learning.SNN(hidden_1, hidden_2,
 ##                                                 epsilon, alpha, S, R, M, number_of_epochs,
@@ -66,7 +89,7 @@ file = 'C:/SNN/SA/Learn_data/03.csv'
 # Data preprocessing
 [item, rel, attr, batch_size,
  number_of_batches, training_ex_idx,
- test_item_set, test_rel_set, test_attr_set] = NN_learning.Prepare_Learning(epsilon, number_of_epochs,
+ test_item_set, test_rel_set, test_attr_set] = NN_learning.Prepare_Learning(number_of_epochs,
                                                                             number_of_batches, data_proportion,
                                                                             online_learning, data_representation, file)
 
@@ -78,61 +101,60 @@ file = 'C:/SNN/SA/Learn_data/03.csv'
                                                   training_ex_idx, test_item_set,
                                                   test_rel_set, test_attr_set)
 
-
 # Visualization
 NN_learning.disp_learning_dynamic(J, J_test)
 print min(J), min(J_test)
 
-# Check result of learning
-example =14
-epoch =1800
-check_results = neural_network.check_result(example, epoch, file, hidden_1,
-                                            hidden_2, theta_history, S)
-print check_results
+### Check result of learning
+##example =14
+##epoch =1800
+##check_results = neural_network.check_result(example, epoch, file, hidden_1,
+##                                            hidden_2, theta_history, S)
+##print check_results
+##
+### NET STRUCTURE ANALYSIS
+##
+##hidden_1_max = 3
+##hidden_2_max = 3
+##num_init = 2      # number of random initializations
+##
+####start = timer()
+####[SA_train, SA_train_of,
+####SA_test, SA_test_of] = NN_learning.Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
+####                                                      hidden_1, hidden_2, epsilon, alpha, S, R, M,
+####                                                      number_of_epochs, number_of_batches, data_proportion,
+####                                                      online_learning, data_representation, file)
+####print timer() - start
+##
+##[SA_train,SA_train_of,
+##SA_test, SA_test_of] = NN_learning.cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
+##                                                          hidden_1, hidden_2, epsilon, alpha, S, R, M,
+##                                                          number_of_epochs, number_of_batches, data_proportion,
+##                                                          online_learning, data_representation, file)
+##
+##
+##
+### current configuration
+##cfg = dict(epsilon=epsilon, alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
+##           number_of_batches=number_of_batches, data_proportion=data_proportion,
+##           online_learning=online_learnivng, file=file, hidden_1_max=hidden_1_max,
+##           hidden_2_max=hidden_2_max, num_init=num_init)
+##
+##csv_opt = 'False'
 
-# NET STRUCTURE ANALYSIS
-
-hidden_1_max = 3
-hidden_2_max = 3
-num_init = 2      # number of random initializations
-
-##start = timer()
-##[SA_train, SA_train_of,
-##SA_test, SA_test_of] = NN_learning.Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
-##                                                      hidden_1, hidden_2, epsilon, alpha, S, R, M,
-##                                                      number_of_epochs, number_of_batches, data_proportion,
-##                                                      online_learning, data_representation, file)
-##print timer() - start
-
-[SA_train,SA_train_of,
-SA_test, SA_test_of] = NN_learning.cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
-                                                          hidden_1, hidden_2, epsilon, alpha, S, R, M,
-                                                          number_of_epochs, number_of_batches, data_proportion,
-                                                          online_learning, data_representation, file)
-
-
-
-# current configuration
-cfg = dict(epsilon=epsilon, alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
-           number_of_batches=number_of_batches, data_proportion=data_proportion,
-           online_learning=online_learnivng, file=file, hidden_1_max=hidden_1_max,
-           hidden_2_max=hidden_2_max, num_init=num_init)
-
-csv_opt = 'False'
-
-# Saving
-file_name = 'aaaarrrrghh!!!'
-NN_learning.save_SA_results(SA_train, SA_train_of, SA_test, SA_test_of, cfg, file_name, csv_opt)
-
+### Saving
+##file_name = 'aaaarrrrghh!!!'
+##NN_learning.save_SA_results(SA_train, SA_train_of, SA_test, SA_test_of, cfg, file_name, csv_opt)
+##
 ##np.savetxt('SA/StructAn[h1max='+str(hidden_1_max)+', '+ \
 ##                             'h2max='+str(hidden_2_max)+', '+ \
 ##                             'Ninit='+str(num_init)+']_'+file, J_SA, delimiter=',')
 
-# Load SA-results
-file = 'eeee'
-f = open(file, 'r')
-J_SA = pickle.load(f)
-[SA_train, SA_train_of, SA_test, SA_test_of] = J_SA
+### Load SA-results
+##file = 'eeee'
+##f = open(file, 'r')
+##J_SA = pickle.load(f)
+##[SA_train, SA_train_of, SA_test, SA_test_of] = J_SA
 ##
 ##
 ##

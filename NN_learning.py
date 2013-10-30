@@ -24,8 +24,8 @@ from timeit import default_timer as timer
 import neural_network
 import pickle
 
-def Prepare_Learning(epsilon, number_of_epochs, number_of_batches,
-                     data_proportion, online_learning, data_representation, file):
+def Prepare_Learning(number_of_epochs, number_of_batches, data_proportion,
+                     online_learning, data_representation, file_name):
     """
     Prepare data from given file according to learning parameters.
     Returns:
@@ -38,12 +38,12 @@ def Prepare_Learning(epsilon, number_of_epochs, number_of_batches,
     """
     # Import data from file
     if data_representation == 'complex':
-        [item, rel, attr] = neural_network.complex_data_preparation(file)
+        [item, rel, attr] = neural_network.complex_data_preparation(file_name)
     elif data_representation == 'separate':
-        [item, rel, attr_num, attr_val] = neural_network.separate_data_preparation2(file)
+        [item, rel, attr_num, attr_val] = neural_network.separate_data_preparation2(file_name)
         attr = (attr_num, attr_val)
-    else:
-        print "data_representation should be 'complex' or 'separate'"
+    elif data_representation == 'large':
+        [item, rel, attr] = neural_network.big_data_preparation(file_name)
 
     data_size = len(item)
     # Online condition
@@ -68,7 +68,7 @@ def Prepare_Learning(epsilon, number_of_epochs, number_of_batches,
     # Test data set
     test_item_set = item[test_ex_idx]
     test_rel_set = rel[test_ex_idx]
-    if data_representation == 'complex':
+    if data_representation == 'complex' or 'large':
         test_attr_set = attr[test_ex_idx]
     elif data_representation == 'separate':
         test_attr_set = range(2)
@@ -130,7 +130,7 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
             m = batch_size  # change "m" for batch_size
             X = item[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
             input_relation = rel[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            if data_representation == 'complex':
+            if data_representation == 'complex' or 'large':
                 Y = attr[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
             elif data_representation == 'separate':
                 Y = range(2)
@@ -192,7 +192,7 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
 
 # BEGINNING
 def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of_batches,
-        data_proportion, online_learning, data_representation, cost_function, file, gauge):
+        data_proportion, online_learning, data_representation, cost_function, file_name, gauge):
     """
     Main learning function.
     Takes given network structure and learning parameters.
@@ -210,11 +210,11 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
     time_start_ext = timer()    # Start point for timer in external block
     # Import data from file
     if data_representation == 'complex':
-        [item, rel, attr] = neural_network.complex_data_preparation(file)
+        [item, rel, attr] = neural_network.complex_data_preparation(file_name)
     elif data_representation == 'separate':
-        [item, rel, attr_num, attr_val] = neural_network.separate_data_preparation2(file)
-    else:
-        print "data_representation should be 'complex' or 'separate'"
+        [item, rel, attr_num, attr_val] = neural_network.separate_data_preparation2(file_name)
+    elif data_representation == 'large':
+        [item, rel, attr] = neural_network.big_data_preparation(file_name)
     time = timer()
     time_ext['data_preparation'] = time - time_start_ext  # run-time of data_preparation()
 
@@ -265,7 +265,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
     # Test data set
     test_item_set = item[test_ex_idx]
     test_rel_set = rel[test_ex_idx]
-    if data_representation == 'complex':
+    if data_representation == 'complex' or 'large':
         test_attr_set = attr[test_ex_idx]
     elif data_representation == 'separate':
         test_attr_set = range(2)
@@ -294,7 +294,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
             m = batch_size  # change "m" for batch_size
             X = item[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
             input_relation = rel[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            if data_representation == 'complex':
+            if data_representation == 'complex' or 'large':
                 Y = attr[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
             elif data_representation == 'separate':
                 Y = range(2)
@@ -377,6 +377,20 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
     return J, J_test, theta_history, time_ext, time_int
 
 
+def save_cfg(cfg, name, txt):
+    """ Save curent configuration given in cfg variable as dictionary.
+        If txt == True, save txt-file, otherwise - pickle."""
+    if txt == False:
+        f = open(name+'_cfg.pkl', 'wb')
+        pickle.dump(cfg, f)
+        f.close()
+    else:
+        writer = csv.writer(open(name+'_cfg.txt', 'wb'))
+        for key, value in cfg.items():
+            writer.writerow([key, value])
+
+
+
 # Gradient verification
 ##[numgrad_1, numgrad_2, numgrad_rel] = neural_network.gradient_check(e, m, X, Y,
 ##        input_relation, theta_1, theta_2, theta_relation, num_lay_1, num_lay_2, R)
@@ -424,7 +438,7 @@ def Rand_Inits(num_init, alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size
 def cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
                            hidden_1, hidden_2, epsilon, alpha, S, R, M,
                            number_of_epochs, number_of_batches, data_proportion,
-                           online_learning, data_representation, cost_function, file):
+                           online_learning, data_representation, cost_function, file_name):
     """
     Optimised structure analysis function (internal loops in separate function)
     Returns: matrixes of errors hidden_1 x hidden_2 (array)
@@ -437,9 +451,9 @@ def cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
     # Prepare date from given file
     [item, rel, attr, batch_size,
      number_of_batches, training_ex_idx,
-     test_item_set, test_rel_set, test_attr_set] = Prepare_Learning(epsilon, number_of_epochs,
+     test_item_set, test_rel_set, test_attr_set] = Prepare_Learning(number_of_epochs,
                                                                     number_of_batches, data_proportion,
-                                                                    online_learning, data_representation, file)
+                                                                    online_learning, data_representation, file_name)
     # Prepare arrays to fill with error values
     SA_train = np.zeros((hidden_1_max, hidden_2_max))
     SA_train_of = np.zeros((hidden_1_max, hidden_2_max))
@@ -471,16 +485,10 @@ def cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
     return SA_train, SA_train_of, SA_test, SA_test_of
 
 
-
-
-
-
-
-
 def Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
                        hidden_1, hidden_2, epsilon, alpha, S, R, M,
                        number_of_epochs, number_of_batches, data_proportion,
-                       online_learning, data_representation, cost_function, file):
+                       online_learning, data_representation, cost_function, file_name):
     """
     Computes efficiency of network with respect to number of neurons in every layer
     (Only for one-layer subnetworks).
@@ -499,9 +507,9 @@ def Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
     # Prepare date from given file
     [item, rel, attr, batch_size,
      number_of_batches, training_ex_idx,
-     test_item_set, test_rel_set, test_attr_set] = Prepare_Learning(epsilon, number_of_epochs,
+     test_item_set, test_rel_set, test_attr_set] = Prepare_Learning(number_of_epochs,
                                                                     number_of_batches, data_proportion,
-                                                                    online_learning, data_representation, file)
+                                                                    online_learning, data_representation, file_name)
     # Prepare arrays to fill with error values
     SA_train = np.zeros((hidden_1_max, hidden_2_max))
     SA_train_of = np.zeros((hidden_1_max, hidden_2_max))

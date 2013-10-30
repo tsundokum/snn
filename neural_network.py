@@ -12,6 +12,10 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 import codecs
+import numpy as np
+import csv
+import os
+
 
 """
 Contains functions to create and learn McClelland's neural network.
@@ -43,9 +47,6 @@ Useful variables:
     num_lay_1: number of layers in the first subnetwork
     num_lay_2: number of layers in the second subnetwork
 """
-
-import numpy as np
-import csv
 
 def sigmoid(z, S):
     """Compute sigmoid function for given number z."""
@@ -177,6 +178,7 @@ def separate_data_preparation2(file):
         attr_val[i] = data[i, 3]
     return item, rel, attr_num, attr_val
 
+
 # Function to prepare partial(separate) training examples
 def separate_data_preparation(file_name):
     """
@@ -221,6 +223,24 @@ def separate_data_preparation(file_name):
     attr_values = np.array([float(row[3]) for row in table])[:, np.newaxis]
 
     return item_matrix, relation_matrix, attr_indexi, attr_values
+
+
+def big_data_preparation(file_dir):
+    """ Takes directory with origin data files.
+        Returns big data set with assembled origin data."""
+    full_item = []
+    full_rel = []
+    full_attr = []
+    for file in os.listdir(file_dir):
+        [item, rel, attr] = complex_data_preparation(file_dir+'/'+file)
+        full_item.append(item)
+        full_rel.append(rel)
+        full_attr.append(attr)
+    full_item = np.vstack((full_item))
+    full_rel = np.vstack((full_rel))
+    full_attr = np.vstack((full_attr))
+
+    return full_item, full_rel, full_attr
 
 
 def initialize_moment(num_lay_1, theta_1, theta_2, theta_relation):
@@ -312,7 +332,7 @@ def forward_propagation(S, m, num_lay_1, num_lay_2, X, input_relation, theta_1,
 
 def mean_squares(m, a_2, Y, data_representation):
     """ Compute least-squares cost function"""
-    if data_representation == 'complex':
+    if data_representation == 'complex' or 'large':
         cost = np.sum((a_2[-1] - Y) ** 2) / m
     elif data_representation == 'separate':
         cost = 0
@@ -326,7 +346,7 @@ def cross_entropy(m, a_2, theta_1, theta_2, theta_relation,
                   num_lay_1, num_lay_2, R, Y, data_representation):
     """ Compute cross-entropy cost function"""
     # Average cost
-    if data_representation == 'complex':
+    if data_representation == 'complex' or 'large':
         cost = np.sum(-Y * np.log(a_2[-1]) - (1 - Y) * np.log(1 - a_2[-1])) / m
     elif data_representation == 'separate':
         cost = 0
@@ -382,7 +402,7 @@ def back_propagation(S, m, a_1, a_2, input_relation, theta_1, theta_2, theta_rel
     rel_input_b = np.hstack((np.ones((m, 1)), input_relation)) # add bias to the relation input
     d_2 = range(num_lay_2 + 1)        # storage for delta values in the second subnet
     # compute error for the output layer
-    if data_representation =='complex':
+    if data_representation =='complex' or 'large':
         d_2[-1] = a_2[-1] - Y
     elif data_representation == 'separate':
         d_2[-1] = np.zeros((np.shape(a_2[-1])))
