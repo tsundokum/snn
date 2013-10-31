@@ -778,3 +778,63 @@ def check_result(example, epoch, file, hidden_1, hidden_2, theta_history, S):
 
 
 
+# ANALYTICAL FUNCTIONS:
+
+# Variance analysis
+def wVar(theta):
+    """ Compute sum of variances of all weigths for every unit in the layer"""
+    disp = 0
+    for row in theta[1:]:
+        disp += np.var(row)
+    return disp
+
+
+def pair_combs(origList):
+    """ Returns every pair combination, of the origList in newList"""
+    newList = []
+    for a in range(len(origList)):
+        for b in range(len(origList)):
+            if a != b and [origList[b], origList[a]] not in newList:
+                newList.append([origList[a],origList[b]])
+    return np.array(newList)
+
+
+def wPairVAr(theta):
+    """ Compute variance between every pair of weigths for evry unit in the layer"""
+    for row in theta[1:]:    # Take all weights of every unit in the next layer
+        pairCombs = pair_combs(row)  # find all the pair combinations of this weights
+        variance = np.var(pairCombs, 1)  # compute variance for every pair combiantion
+        totalVar = np.sum(variance)  # compute sum
+        return totalVar
+
+
+def actVar(S, hidden_1, hidden_2, file_name, theta_1, theta_2, theta_relation):
+    """ Returns mean variance for every layer over all learning examples."""
+    [item, rel, attr] = complex_data_preparation(file_name)
+    input_size = np.size(item, 1)  # Item number
+    relation_in_size = np.size(rel, 1)  # Relations number
+    output_size = 48                    # Number of attributes
+    num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
+    num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
+    num_test_ex = len(test_item_set)    # Number of test examples
+    batch_size = len(item)
+    m = batch_size    # change "m" for batch_size
+    X = item[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
+    input_relation = rel[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
+    [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2, item,
+                                                    rel, theta_1, theta_2, theta_relation)
+    var = []
+    for a in [a_1[1], a_2[0], a_2[1]]:
+        row_var = []
+        for row in a:
+            row_var.append(np.var(row[1:]))
+        var.append(np.mean(row_var))
+
+    return var
+
+
+
+
+
+
+
