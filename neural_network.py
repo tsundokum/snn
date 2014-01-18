@@ -59,6 +59,87 @@ def sigmoid_gradient(z, S):
     return S * q * (1 - q)
 
 
+def data_preparation_xls(file, data_representation):
+    """
+    Prepare learning data from given xls-file.
+    Takes file name and data_representation parameters written as strings.
+    Returns matrixes in format: number of examples by number of dimensions.
+    For complex representation:
+    Every row in input matrix represents one learning example in which the
+    corresponding number equals one and others are zero.
+    (Matrix for attributes contains all information for the current input pair!)
+    For separate representation:
+    Every row in the matrix represents one learning example in which the
+    corresponding number equals one and others are zero.
+    """
+    # read file
+    rb = xlrd.open_workbook(file)
+    sheet = rb.sheet_by_name('Base')  # take data from particular page
+
+    relations = sheet.col_values(0)[1:]  # take all the relation names
+    for r in xrange(len(relations)):
+        if relations[r] != relations[r+1]: break  # countitng attributes
+    # define dimensionality  of learning matrices
+    num_of_attr = r + 1
+    num_of_items = len(sheet.row_values(0)[2:])
+    num_of_rel = len(relations) / num_of_attr
+    # create list of all connection values
+    val_list = sheet.col_values(2)[1:]
+    for col in xrange(num_of_items-1):
+        val_list.extend(sheet.col_values(col+3)[1:])
+    #  create learning matrices with respect to the data_representation requirements
+    if data_representation == 'complex':
+        num_ex = num_of_items * num_of_rel  # number of examples
+        item_matrix = np.zeros((num_ex, num_of_items))
+        rel_matrix = np.zeros((num_ex, num_of_rel))
+        attr_matrix = np.zeros((num_ex, num_of_attr))
+        for ex in xrange(num_ex):       # fill the attribute matrix
+            attr_matrix[ex, :] = val_list[num_of_attr*ex : num_of_attr*(ex+1)]
+        for i in xrange(num_of_items):  # fill item learning matrix
+            item_matrix[i*num_of_items:(i+1)*num_of_items, i] = 1
+        for j in xrange(num_of_items):  # fill the relation learning matrix
+            for i in xrange(num_of_rel):
+                rel_matrix[j*num_of_items+i, i] = 1
+
+        return item_matrix, rel_matrix, attr_matrix
+
+    elif data_representation == 'separate':
+        num_ex = num_of_items * num_of_rel * num_of_attr  # number of examples
+        num_per_item = num_of_attr * num_of_rel
+        data = np.zeros((num_ex, 4))
+        # Fill the first column with numbers of items
+        for i in xrange(num_of_items):
+            data[i*num_per_item : (i+1)*num_per_item, 0] = i + 1
+        # Fill the second column with numbers of relations
+            tab = data[i*num_per_item : (i+1)*num_per_item]
+            for j in xrange(num_of_rel):
+                tab[j*num_of_attr : (j+1)*num_of_attr, 1] = j + 1
+            data[i*num_per_item : (i+1)*num_per_item] =  tab
+        # Fill the third column with numbers of attributes
+        for i in xrange(num_of_items * num_of_rel):
+            tab = data[i*num_of_attr : (i+1)*num_of_attr]
+            for j in range(num_of_attr):
+                tab[j, 2] = j + 1
+            data[i*num_of_attr : (i+1)*num_of_attr] = tab
+        # Fill the fourth column with connection value
+        data[:, 3] = val_list
+
+        # Create learning matrices.
+        item_matrix = np.zeros((num_ex, num_of_items))
+        for i in xrange(num_ex):
+            item_matrix[i, data[i, 0]-1] = 1
+        rel_matrix = np.zeros((num_ex, num_of_rel))
+        for i in xrange(num_ex):
+            rel_matrix[i, data[i, 1]-1] = 1
+        attr_num = np.zeros((num_ex, 1), dtype = 'int8')
+        attr_val = np.zeros((num_ex, 1))
+        for i in xrange(num_ex):
+            attr_num[i] = data[i, 2] - 1
+            attr_val[i] = data[i, 3]
+
+        return item_matrix, rel_matrix, attr_num, attr_val
+
+
 # Function to prepare full(complex) training examples
 def complex_data_preparation(file):
     """
@@ -66,9 +147,6 @@ def complex_data_preparation(file):
     ((Represent data in 16 examples))
     Takes file name written as string.
     Returns matrixes in format: number of examples by number of dimensions.
-    Every row in input matrix represents one learning example in which the
-    corresponding number equals one and others are zero.
-    (Matrix for attributes contains all information for the current input pair!)
     Returns:
         ----
         item: learning matrix for items (array)
@@ -193,7 +271,6 @@ def separate_data_preparation(file_name):
         item: learning matrix for items (array)
         rel: learning matrix for ralations (array)
         attr: learning matrix for attributes (array)
-
     """
     # Extract data from file as list of strings
     table = []
@@ -816,12 +893,9 @@ def actVar(S, hidden_1, hidden_2, file_name, theta_1, theta_2, theta_relation):
     output_size = 48                    # Number of attributes
     num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
     num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
-    num_test_ex = len(test_item_set)    # Number of test examples
     batch_size = len(item)
     m = batch_size    # change "m" for batch_size
-    X = item[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-    input_relation = rel[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-    [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2, item,
+    [a_1, a_2] = forward_propagation(S, m, num_lay_1, num_lay_2, item,
                                                     rel, theta_1, theta_2, theta_relation)
     var = []
     for a in [a_1[1], a_2[0], a_2[1]]:
