@@ -37,13 +37,20 @@ def Prepare_Learning(number_of_epochs, number_of_batches, data_proportion,
 
     """
     # Import data from file
-    if data_representation == 'complex':
-        [item, rel, attr] = neural_network.complex_data_preparation(file_name)
-    elif data_representation == 'separate':
-        [item, rel, attr_num, attr_val] = neural_network.separate_data_preparation2(file_name)
-        attr = (attr_num, attr_val)
-    elif data_representation == 'large':
+    if data_representation == 'large':
         [item, rel, attr] = neural_network.big_data_preparation(file_name)
+    else:
+        if file_name[-4:] == '.xls':
+            [item, rel, attr] = neural_network.data_preparation_xls(file_name, data_representation)
+            if data_representation == 'separate':
+                [attr_num, attr_val] = attr
+        elif file_name[-4:] == '.csv':
+            if data_representation == 'complex':
+                [item, rel, attr] = neural_network.complex_data_preparation(file_name)
+            elif data_representation == 'separate':
+                [item, rel, attr_num, attr_val] = neural_network.separate_data_preparation2(file_name)
+            else:
+                print "inappropriate file type!"
 
     data_size = len(item)
     # Online condition
@@ -65,25 +72,36 @@ def Prepare_Learning(number_of_epochs, number_of_batches, data_proportion,
     training_ex_idx = rand_idx[:num_train_ex]
     test_ex_idx = rand_idx[num_train_ex:]
 
+    # Train data set
+    train_item_set = item[training_ex_idx]
+    train_rel_set = rel[training_ex_idx]
+    if (data_representation == 'complex') or (data_representation == 'large'):
+        train_attr_set = attr[training_ex_idx]
+    elif data_representation == 'separate':
+        train_attr_set = range(2)
+        train_attr_set[0] = attr_num[training_ex_idx]
+        train_attr_set[1] = attr_val[training_ex_idx]
+
     # Test data set
     test_item_set = item[test_ex_idx]
     test_rel_set = rel[test_ex_idx]
-    if data_representation == 'complex' or 'large':
+    if (data_representation == 'complex') or (data_representation == 'large'):
         test_attr_set = attr[test_ex_idx]
     elif data_representation == 'separate':
         test_attr_set = range(2)
         test_attr_set[0] = attr_num[test_ex_idx]
         test_attr_set[1] = attr_val[test_ex_idx]
 
-    return item, rel, attr, batch_size, number_of_batches, training_ex_idx, \
-           test_item_set, test_rel_set, test_attr_set
+    train_set = (train_item_set, train_rel_set, train_attr_set)
+    test_set = (test_item_set, test_rel_set, test_attr_set)
 
+    return batch_size, number_of_batches, train_set, test_set
 
 
 # Learning
-def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
-             attr, data_representation, data_proportion, cost_function, number_of_epochs, number_of_batches,
-             training_ex_idx, test_item_set, test_rel_set, test_attr_set):
+def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size,
+             data_representation, data_proportion, cost_function,
+             number_of_epochs, number_of_batches, train_set, test_set, exact_error_eval):
     """
     Perform learning with given parameters.
     Returns:
@@ -94,13 +112,25 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
         (list(iterations of learning) of lists(subnetwork)
         of lists(for multilayer subnetworks) of arrays)
     """
+    # Unpack data variables
+    train_item_set = train_set[0]  # train set
+    train_rel_set = train_set[1]
+    train_attr_set = train_set[2]
+    test_item_set = test_set[0]  # test set
+    test_rel_set = test_set[1]
+    test_attr_set = test_set[2]
+    if data_representation == 'complex':
+        output_size = np.size(train_attr_set, 1)
+    elif data_representation == 'separate':
+        output_size = int(np.max(train_attr_set[0], 0)) + 1
     # Usefull variables
-    input_size = np.size(item, 1)  # Item number
-    relation_in_size = np.size(rel, 1)  # Relations number
-    output_size = 48                    # Number of attributes
+    input_size = np.size(train_item_set, 1)  # Item number
+    relation_in_size = np.size(train_rel_set, 1)  # Relations number
     num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
     num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
     num_test_ex = len(test_item_set)    # Number of test examples
+    num_train_ex = len(train_item_set)
+    training_ex_idx = range(num_train_ex)  # indexes of the training examples
     # Error history
     J = range(number_of_batches * number_of_epochs + 1)
     J_test = range(number_of_batches * number_of_epochs + 1)
@@ -108,10 +138,6 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
     theta_history = range(number_of_batches * number_of_epochs + 1)
     for i in range(number_of_batches * number_of_epochs + 1):
         theta_history[i] = range(3)
-    # unpack attr variable
-    if data_representation == 'separate':
-        attr_num = attr[0]
-        attr_val = attr[1]
 
     #  Create 3 sets of matrices of initial weights according to the given structure.
     [theta_1, theta_2, theta_relation] = neural_network.initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
@@ -123,48 +149,78 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
     [moment_1, moment_2, moment_relation] = neural_network.initialize_moment(num_lay_1, theta_1, theta_2, theta_relation)
 
     for epoch in range(number_of_epochs):  # Beginning of epoch loop
-        training_ex_idx = np.random.permutation(training_ex_idx)
+        training_ex_idx = np.random.permutation(training_ex_idx)  # permute indeces of the training examples
 
         for batch in range(number_of_batches):  # Beginning of batch loop
+            batch_ex = range(batch * batch_size, (batch+1) * batch_size)  # batch example indeces
+            batch_idx = training_ex_idx[batch_ex]  # take example indexes in series
 
-            m = batch_size  # change "m" for batch_size
-            X = item[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            input_relation = rel[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            if data_representation == 'complex' or 'large':
-                Y = attr[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            elif data_representation == 'separate':
-                Y = range(2)
-                Y[0] = attr_num[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-                Y[1] = attr_val[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-
+            if exact_error_eval == True:
+                # Take all the tarining data for exact evaluation
+                item_input = train_item_set
+                rel_input = train_rel_set
+                attr_output = train_attr_set
+            else:
+                # Take only batch examples
+                item_input = train_item_set[batch_idx]
+                rel_input = train_rel_set[batch_idx]
+                if data_representation == 'complex':
+                    attr_output = train_attr_set[batch_idx]
+                elif data_representation == 'separate':
+                    attr_output = [train_attr_set[0][batch_idx], train_attr_set[1][batch_idx]]
+            if len(item_input) == 0:  # Interaption for the case of bad data division
+                print "Warning! Empty batches."
+                break
 
             # Compute activations of every unit in the network.
-            [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2,
-                                                            X, input_relation, theta_1, theta_2, theta_relation)
-
+            [a_1, a_2] = neural_network.forward_propagation(S, len(item_input), num_lay_1, num_lay_2,
+                                                            item_input, rel_input,
+                                                            theta_1, theta_2, theta_relation)
             # Compute average error with regularization (training)
-            J[epoch * number_of_batches + batch] = neural_network.compute_cost_function(cost_function, m, a_2, theta_1, theta_2, theta_relation,
-                                                                   num_lay_1, num_lay_2, R, Y, data_representation)
-
+            J[epoch * number_of_batches + batch] = \
+            neural_network.compute_cost_function(cost_function, len(item_input), a_2,
+                                                 theta_1, theta_2, theta_relation,
+                                                 num_lay_1, num_lay_2, R,
+                                                 attr_output, data_representation)
+            # Compute real error (test)
             if data_proportion != 0:
-                # Compute real error (test)
-                [a_test_1, a_test_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2, test_item_set, test_rel_set, theta_1, theta_2, theta_relation)
+                [a_test_1, a_test_2] = \
+                    neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2,
+                                                       test_item_set, test_rel_set,
+                                                       theta_1, theta_2, theta_relation)
+                J_test[epoch * number_of_batches + batch] = \
+                    neural_network.compute_cost_function(cost_function, num_test_ex, a_test_2,
+                                                         theta_1, theta_2, theta_relation,
+                                                         num_lay_1, num_lay_2, R,
+                                                         test_attr_set, data_representation)
 
-                J_test[epoch * number_of_batches + batch] = neural_network.compute_cost_function(cost_function, num_test_ex, a_test_2, theta_1, theta_2, theta_relation,
-                                                                           num_lay_1, num_lay_2, R, test_attr_set, data_representation)
+            if exact_error_eval == True:
+                # If previously were used all the data take only batch examples for learning
+                a_1 = [a[batch_idx] for a in a_1]  # a_1 and a_2 are lists
+                a_2 = [a[batch_idx] for a in a_2]
+                rel_input = rel_input[batch_idx]
+                if data_representation == 'complex':
+                    attr_output = train_attr_set[batch_idx]
+                elif data_representation == 'separate':
+                    attr_output = [train_attr_set[0][batch_idx], train_attr_set[1][batch_idx]]
+
 
             # Compute derivative of the cost function with respect to matrices theta.
-            [gradient_1, gradient_2, gradient_rel] = neural_network.back_propagation(S, m, a_1, a_2, input_relation,
-                                                                                     theta_1, theta_2, theta_relation,
-                                                                                     num_lay_1, num_lay_2, R, Y, data_representation)
+            [gradient_1, gradient_2, gradient_rel] = \
+                neural_network.back_propagation(S, batch_size, a_1, a_2, rel_input,
+                                                theta_1, theta_2, theta_relation,
+                                                num_lay_1, num_lay_2, R, attr_output,
+                                                data_representation)
 
             # Change matrices of weights according to the gradient.
-            [theta_1_temp, theta_2_temp, theta_relation_temp] = neural_network.descent(theta_1, theta_2, theta_relation,
-                                                                                       gradient_1, gradient_2, gradient_rel,
-                                                                                       num_lay_1, num_lay_2, alpha, moment_1,
-                                                                                       moment_2, moment_relation, M)
+            [theta_1_temp, theta_2_temp,
+             theta_relation_temp] = neural_network.descent(theta_1, theta_2, theta_relation,
+                                                          gradient_1, gradient_2, gradient_rel,
+                                                          num_lay_1, num_lay_2, alpha, moment_1,
+                                                          moment_2, moment_relation, M)
             # Save weights values
-            theta_history[epoch * number_of_batches + batch + 1] = [theta_1_temp, theta_2_temp, theta_relation_temp]
+            theta_history[epoch * number_of_batches + batch + 1] = [theta_1_temp, theta_2_temp,
+                                                                    theta_relation_temp]
 
             # Update current weight matrices
             theta_1 = theta_1_temp
@@ -175,24 +231,31 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size, item, rel,
 ##            print 'epoch: '+str(epoch)+' / '+str(number_of_epochs)
 
     # Compute final error after all loops of learning (Training)
-    [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2, X,
-                                                    input_relation, theta_1, theta_2,theta_relation)
-    J[-1] = neural_network.compute_cost_function(cost_function, m, a_2, theta_1, theta_2,
-                                                 theta_relation, num_lay_1,
-                                                 num_lay_2, R, Y, data_representation)
+    [a_1, a_2] = neural_network.forward_propagation(S, num_train_ex, num_lay_1, num_lay_2,
+                                                    train_item_set, train_rel_set,
+                                                    theta_1, theta_2,theta_relation)
+
+    J[-1] = neural_network.compute_cost_function(cost_function, num_train_ex, a_2,
+                                                 theta_1, theta_2, theta_relation,
+                                                 num_lay_1, num_lay_2, R,
+                                                 train_attr_set, data_representation)
     if data_proportion != 0:
         # Compute final real error (Test)
         [a_1, a_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2,
-                                                        test_item_set, test_rel_set, theta_1, theta_2, theta_relation)
-        J_test[-1] = neural_network.compute_cost_function(cost_function, num_test_ex, a_2, theta_1, theta_2, theta_relation,
-                                                        num_lay_1, num_lay_2, R, test_attr_set, data_representation)
+                                                        test_item_set, test_rel_set,
+                                                        theta_1, theta_2, theta_relation)
+        J_test[-1] = neural_network.compute_cost_function(cost_function, num_test_ex, a_2,
+                                                          theta_1, theta_2, theta_relation,
+                                                          num_lay_1, num_lay_2, R,
+                                                          test_attr_set, data_representation)
 
     return J, J_test, theta_history
 
 
 # BEGINNING
-def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of_batches,
-        data_proportion, online_learning, data_representation, cost_function, file_name, gauge):
+def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs,
+        number_of_batches, data_proportion, online_learning, data_representation,
+        cost_function, exact_error_eval, file_name, gauge):
     """
     Main learning function.
     Takes given network structure and learning parameters.
@@ -209,26 +272,77 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
     time_ext = dict()           # Create dictionary to store time values from external block
     time_start_ext = timer()    # Start point for timer in external block
     # Import data from file
-    if data_representation == 'complex':
-        [item, rel, attr] = neural_network.complex_data_preparation(file_name)
-    elif data_representation == 'separate':
-        [item, rel, attr_num, attr_val] = neural_network.separate_data_preparation2(file_name)
-    elif data_representation == 'large':
+    if data_representation == 'large':
         [item, rel, attr] = neural_network.big_data_preparation(file_name)
+    else:
+        if file_name[-4:] == '.xls':
+            [item, rel, attr] = neural_network.data_preparation_xls(file_name,
+                                                                    data_representation)
+            if data_representation == 'separate':
+                [attr_num, attr_val] = attr
+        elif file_name[-4:] == '.csv':
+            if data_representation == 'complex':
+                [item, rel, attr] = neural_network.complex_data_preparation(file_name)
+            elif data_representation == 'separate':
+                [item, rel,
+                 attr_num,
+                 attr_val] = neural_network.separate_data_preparation2(file_name)
+            else:
+                print "inappropriate file type!"
     time = timer()
     time_ext['data_preparation'] = time - time_start_ext  # run-time of data_preparation()
 
-    # Usefull veriables:
     data_size = len(item)
-    #m = len(X)                  # Batch size
-    input_size = np.size(item, 1)  # Item number
-    relation_in_size = np.size(rel, 1)  # Relations number
-    output_size = 48                    # Number of attributes
-    num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
-    num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
     # Online condition
     if online_learning == 'on':
         number_of_batches = int(data_size - round(data_proportion*data_size))
+
+    # Data division:
+    # Approximate data separation
+    num_test_ex = round(data_proportion*data_size)
+    num_train_ex = data_size - num_test_ex
+    # Batch size calculationa
+    batch_size = int(round(num_train_ex / number_of_batches))
+    # Accurate data separation
+    num_train_ex = batch_size * number_of_batches
+    num_test_ex = data_size - num_train_ex
+    # Randomization of examples
+    idx = range(data_size)
+    rand_idx = np.random.permutation(idx)
+    training_ex_idx = rand_idx[:num_train_ex]
+    test_ex_idx = rand_idx[num_train_ex:]
+
+    # Train data set
+    train_item_set = item[training_ex_idx]
+    train_rel_set = rel[training_ex_idx]
+    if (data_representation == 'complex') or (data_representation == 'large'):
+        train_attr_set = attr[training_ex_idx]
+    elif data_representation == 'separate':
+        train_attr_set = range(2)
+        train_attr_set[0] = attr_num[training_ex_idx]
+        train_attr_set[1] = attr_val[training_ex_idx]
+    # Test data set
+    test_item_set = item[test_ex_idx]
+    test_rel_set = rel[test_ex_idx]
+    if (data_representation == 'complex') or (data_representation == 'large'):
+        test_attr_set = attr[test_ex_idx]
+    elif data_representation == 'separate':
+        test_attr_set = range(2)
+        test_attr_set[0] = attr_num[test_ex_idx]
+        test_attr_set[1] = attr_val[test_ex_idx]
+
+    # Usefull variables
+    input_size = np.size(train_item_set, 1)  # Item number
+    relation_in_size = np.size(train_rel_set, 1)  # Relations number
+    if data_representation == 'complex':
+        output_size = np.size(train_attr_set, 1)
+    elif data_representation == 'separate':
+        output_size = int(np.max(train_attr_set[0], 0)) + 1
+    num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
+    num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
+    num_test_ex = len(test_item_set)    # Number of test examples
+    num_train_ex = len(train_item_set)
+    training_ex_idx = range(num_train_ex)  # indexes of the training examples
     # Error history
     J = range(number_of_batches * number_of_epochs + 1)
     J_test = range(number_of_batches * number_of_epochs + 1)
@@ -245,43 +359,23 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
         time_int.append(np.zeros((number_of_epochs, number_of_batches)))
     [time_forward_prop, time_cost, time_test, time_back_prop, time_descent] = time_int
     # fit the progress bar
-    gauge.SetRange(number_of_epochs)
-
-    # Data division (optional):
-    # Approximate data separation
-    num_test_ex = round(data_proportion*data_size)
-    num_train_ex = data_size - num_test_ex
-    # Batch size calculation
-    batch_size = int(round(num_train_ex / number_of_batches))
-    # Accurate data separation
-    num_train_ex = batch_size * number_of_batches
-    num_test_ex = data_size - num_train_ex
-    # Randomization of examples
-    idx = range(data_size)
-    rand_idx = np.random.permutation(idx)
-    training_ex_idx = rand_idx[:num_train_ex]
-    test_ex_idx = rand_idx[num_train_ex:]
-
-    # Test data set
-    test_item_set = item[test_ex_idx]
-    test_rel_set = rel[test_ex_idx]
-    if data_representation == 'complex' or 'large':
-        test_attr_set = attr[test_ex_idx]
-    elif data_representation == 'separate':
-        test_attr_set = range(2)
-        test_attr_set[0] = attr_num[test_ex_idx]
-        test_attr_set[1] = attr_val[test_ex_idx]
+#    gauge.SetRange(number_of_epochs)
     time_ext['variables, data_division'] = timer() - time
     time = timer()    # update timer
 
+
     #  Create 3 sets of matrices of initial weights according to the given structure.
-    [theta_1, theta_2, theta_relation] = neural_network.initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
-                                                                           output_size, num_lay_1, num_lay_2, epsilon)
+    [theta_1, theta_2,
+     theta_relation] = neural_network.initialise_weights(input_size, hidden_1, hidden_2,
+                                                         relation_in_size, output_size,
+                                                         num_lay_1, num_lay_2, epsilon)
     # Save original theta matrices
     theta_history[0] = [theta_1, theta_2, theta_relation]
 
     #  Create initial moment for every weight
-    [moment_1, moment_2, moment_relation] = neural_network.initialize_moment(num_lay_1, theta_1, theta_2, theta_relation)
+    [moment_1, moment_2,
+     moment_relation] = neural_network.initialize_moment(num_lay_1, theta_1,
+                                                         theta_2, theta_relation)
     time_ext['weights, moment_init'] = timer() - time
 
     for epoch in range(number_of_epochs):  # Beginning of epoch loop
@@ -290,58 +384,87 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
 
         for batch in range(number_of_batches):  # Beginning of batch loop
             start_batch = timer()
+            batch_ex = range(batch * batch_size, (batch+1) * batch_size)  # batch example indeces
+            batch_idx = training_ex_idx[batch_ex]  # take example indexes in series
 
-            m = batch_size  # change "m" for batch_size
-            X = item[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            input_relation = rel[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            if data_representation == 'complex' or 'large':
-                Y = attr[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-            elif data_representation == 'separate':
-                Y = range(2)
-                Y[0] = attr_num[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-                Y[1] = attr_val[training_ex_idx[batch * batch_size : (batch+1) * batch_size]]
-
+            if exact_error_eval == True:
+                # Take all the tarining data for exact evaluation
+                item_input = train_item_set
+                rel_input = train_rel_set
+                attr_output = train_attr_set
+            else:
+                # Take only batch examples
+                item_input = train_item_set[batch_idx]
+                rel_input = train_rel_set[batch_idx]
+                if data_representation == 'complex':
+                    attr_output = train_attr_set[batch_idx]
+                elif data_representation == 'separate':
+                    attr_output = [train_attr_set[0][batch_idx], train_attr_set[1][batch_idx]]
+            if len(item_input) == 0:  # Interaption for the case of bad data division
+                print "Warning! Empty batches."
+                break
 
             # Compute activations of every unit in the network.
-            [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2,
-                                                            X, input_relation, theta_1, theta_2, theta_relation)
+            [a_1, a_2] = neural_network.forward_propagation(S, len(item_input),
+                                                            num_lay_1, num_lay_2,
+                                                            item_input, rel_input,
+                                                            theta_1, theta_2,
+                                                            theta_relation)
             time = timer()
             time_forward_prop[epoch, batch] = time - start_batch
 
-            # Compute average error with regularization (training)
-            J[epoch * number_of_batches + batch] = neural_network.compute_cost_function(cost_function, m, a_2, theta_1, theta_2, theta_relation,
-                                                                   num_lay_1, num_lay_2, R, Y, data_representation)
+         # Compute average error with regularization (training)
+            J[epoch * number_of_batches + batch] = \
+            neural_network.compute_cost_function(cost_function, len(item_input), a_2,
+                                                 theta_1, theta_2, theta_relation,
+                                                 num_lay_1, num_lay_2, R,
+                                                 attr_output, data_representation)
             time_cost[epoch, batch] = timer() - time
             time = timer()    # timer update
 
+            # Compute real error (test)
             if data_proportion != 0:
-                # Compute real error (test)
-                [a_test_1, a_test_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1,
-                                                                          num_lay_2, test_item_set,
-                                                                          test_rel_set, theta_1, theta_2,
-                                                                          theta_relation)
-
-                J_test[epoch * number_of_batches + batch] = neural_network.compute_cost_function(cost_function, num_test_ex, a_test_2, theta_1,
-                                                                                                 theta_2, theta_relation, num_lay_1,
-                                                                                                 num_lay_2, R, test_attr_set,
-                                                                                                 data_representation)
+                [a_test_1, a_test_2] = \
+                    neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2,
+                                                       test_item_set, test_rel_set,
+                                                       theta_1, theta_2, theta_relation)
+                J_test[epoch * number_of_batches + batch] = \
+                    neural_network.compute_cost_function(cost_function, num_test_ex, a_test_2,
+                                                         theta_1, theta_2, theta_relation,
+                                                         num_lay_1, num_lay_2, R,
+                                                         test_attr_set, data_representation)
             time_test[epoch, batch] = timer() - time
             time = timer()    # timer update
 
+            if exact_error_eval == True:
+                # If previously were used all the data take only batch examples for learning
+                a_1 = [a[batch_idx] for a in a_1]  # a_1 and a_2 are lists
+                a_2 = [a[batch_idx] for a in a_2]
+                rel_input = rel_input[batch_idx]
+                if data_representation == 'complex':
+                    attr_output = train_attr_set[batch_idx]
+                elif data_representation == 'separate':
+                    attr_output = [train_attr_set[0][batch_idx], train_attr_set[1][batch_idx]]
+
+
             # Compute derivative of the cost function with respect to matrices theta.
-            [gradient_1, gradient_2, gradient_rel] = neural_network.back_propagation(S, m, a_1, a_2, input_relation,
-                                                                                     theta_1, theta_2, theta_relation,
-                                                                                     num_lay_1, num_lay_2, R, Y, data_representation)
+            [gradient_1, gradient_2, gradient_rel] = \
+                neural_network.back_propagation(S, batch_size, a_1, a_2, rel_input,
+                                                theta_1, theta_2, theta_relation,
+                                                num_lay_1, num_lay_2, R, attr_output,
+                                                data_representation)
             time_back_prop[epoch, batch] = timer() - time
             time = timer()    # timer update
 
             # Change matrices of weights according to the gradient.
-            [theta_1_temp, theta_2_temp, theta_relation_temp] = neural_network.descent(theta_1, theta_2, theta_relation,
-                                                                                       gradient_1, gradient_2, gradient_rel,
-                                                                                       num_lay_1, num_lay_2, alpha, moment_1,
-                                                                                       moment_2, moment_relation, M)
+            [theta_1_temp, theta_2_temp,
+             theta_relation_temp] = neural_network.descent(theta_1, theta_2, theta_relation,
+                                                          gradient_1, gradient_2, gradient_rel,
+                                                          num_lay_1, num_lay_2, alpha, moment_1,
+                                                          moment_2, moment_relation, M)
             # Save weights values
-            theta_history[epoch * number_of_batches + batch + 1] = [theta_1_temp, theta_2_temp, theta_relation_temp]
+            theta_history[epoch * number_of_batches + batch + 1] = [theta_1_temp, theta_2_temp,
+                                                                    theta_relation_temp]
 
             # Update current weight matrices
             theta_1 = theta_1_temp
@@ -349,28 +472,32 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs, number_of
             theta_2 = theta_2_temp
 
             time_descent[epoch, batch] = timer() - time
-
             time_batch[epoch, batch] = timer() - start_batch    # batch timing
 
 ##        # show progress
 ##        if data_representation == 'separate':
 ##            print 'epoch: '+str(epoch)+' / '+str(number_of_epochs)
-        gauge.SetValue(epoch) # show progress
+#        gauge.SetValue(epoch) # show progress
         time_epoch[epoch] = timer() - start_epoch        # epoch timing
 
     # Compute final error after all loops of learning (Training)
-    [a_1, a_2] = neural_network.forward_propagation(S, m, num_lay_1, num_lay_2, X,
-                                                    input_relation, theta_1, theta_2,theta_relation)
-    J[-1] = neural_network.compute_cost_function(cost_function, m, a_2, theta_1, theta_2,
-                                                 theta_relation, num_lay_1,
-                                                 num_lay_2, R, Y, data_representation)
+    [a_1, a_2] = neural_network.forward_propagation(S, num_train_ex, num_lay_1, num_lay_2,
+                                                    train_item_set, train_rel_set,
+                                                    theta_1, theta_2,theta_relation)
 
+    J[-1] = neural_network.compute_cost_function(cost_function, num_train_ex, a_2,
+                                                 theta_1, theta_2, theta_relation,
+                                                 num_lay_1, num_lay_2, R,
+                                                 train_attr_set, data_representation)
     if data_proportion != 0:
         # Compute final real error (Test)
         [a_1, a_2] = neural_network.forward_propagation(S, num_test_ex, num_lay_1, num_lay_2,
-                                                        test_item_set, test_rel_set, theta_1, theta_2, theta_relation)
-        J_test[-1] = neural_network.compute_cost_function(cost_function, num_test_ex, a_2, theta_1, theta_2, theta_relation,
-                                                        num_lay_1, num_lay_2, R, test_attr_set, data_representation)
+                                                        test_item_set, test_rel_set,
+                                                        theta_1, theta_2, theta_relation)
+        J_test[-1] = neural_network.compute_cost_function(cost_function, num_test_ex, a_2,
+                                                          theta_1, theta_2, theta_relation,
+                                                          num_lay_1, num_lay_2, R,
+                                                          test_attr_set, data_representation)
     time_int.append(time_batch)
     time_int.append(time_epoch)
 
@@ -690,7 +817,6 @@ def PCA(X,k):
     Ureduce = U[:, :k]
     z = np.dot(X, Ureduce)
     return z
-
 
 
 def SA(alpha, R, S, M, epsilon, batch_size, item, rel, attr, data_representation,

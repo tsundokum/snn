@@ -9,7 +9,6 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 """
-
 Optimisation:
     -SA: use simpler SNN-function(prepared), only training loops
     -change square for multiplication
@@ -17,9 +16,6 @@ Optimisation:
     -Check
     -CUDA
     -Numexpr for multiprocessing perfomance
-
-
--
 """
 
 import numpy as np
@@ -31,7 +27,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from timeit import default_timer as timer
 import os
 
-os.chdir('c:\SNN\SA')
+##os.chdir('c:\SNN\original_data')
 
 import neural_network
 import NN_learning
@@ -39,67 +35,68 @@ import NN_learning
 np.random.seed(111)
 
 # Parameters:
-hidden_1 = [4]  # Structure of the first subnetwork
-hidden_2 = [5]  # Structure of the second subnetwork
+hidden_1 = [6]  # Structure of the first subnetwork
+hidden_2 = [8]  # Structure of the second subnetwork
 epsilon = 0.5  # Limitation of  initial weights
 alpha = 1  # Learning rate
-S = 1   # Slope of the sigmoid function
+S = 2   # Slope of the sigmoid function
 R = 0.0  # Coefficient of regularization
 M = 0.0  # Momentum
 e = 1e-4  # value of weights changing in the gradient check function
-number_of_epochs = 10
+number_of_epochs = 37
 number_of_batches = 1
 data_proportion = 0.25
-online_learning = 'on' # Set 'on' to turn on online learing (one example per iteration)
-data_representation = 'separate'  # Representation of lerning data, 'complex' or 'separate'
+online_learning = 'on'  # Set 'on' to turn on online learing (one example per iteration)
+data_representation = 'complex'  # Representation of lerning data, 'complex' or 'separate'
 cost_function = 'mean_squares'
-file = 'C:/SNN/SA/Learn_data/03.csv'
+exact_error_eval = 1  # When turned 'on' calcualate training erroe over all training axamples.
+file_name = 'C:/SNN/original data/Evgrafova.xls'
 
 
-# BIG set analysis
-
-# load data set
-# Import data from file
-file_dir = 'c:\\SNN\\SA\\Learn_data'
-def big_data_preparation(file_dir):
-    """ Takes directory with origin data files.
-        Returns big data set with assembled origin data."""
-    full_item = []
-    full_rel = []
-    full_attr = []
-    for file in os.listdir(file_dir):
-        [item, rel, attr] = neural_network.complex_data_preparation(file_dir+'/'+file)
-        full_item.append(item)
-        full_rel.append(rel)
-        full_attr.append(attr)
-    full_item = np.vstack((full_item))
-    full_rel = np.vstack((full_rel))
-    full_attr = np.vstack((full_attr))
-    return full_item, full_rel, full_attr
+### BIG set analysis
+##
+### load data set
+### Import data from file
+##file_dir = 'c:\\SNN\\SA\\Learn_data'
+##def big_data_preparation(file_dir):
+##    """ Takes directory with origin data files.
+##        Returns big data set with assembled origin data."""
+##    full_item = []
+##    full_rel = []
+##    full_attr = []
+##    for file in os.listdir(file_dir):
+##        [item, rel, attr] = neural_network.complex_data_preparation(file_dir+'/'+file)
+##        full_item.append(item)
+##        full_rel.append(rel)
+##        full_attr.append(attr)
+##    full_item = np.vstack((full_item))
+##    full_rel = np.vstack((full_rel))
+##    full_attr = np.vstack((full_attr))
+##    return full_item, full_rel, full_attr
 
 
 ##start = timer()
-##[J, J_test, theta_history, time_ext, time_int] = NN_learning.SNN(hidden_1, hidden_2,
-##                                                 epsilon, alpha, S, R, M, number_of_epochs,
-##                                                 number_of_batches, data_proportion, online_learning,
-##                                                 data_representation, cost_function, file, gauge)
+##[J, J_test,
+## theta_history,
+## time_ext, time_int] = NN_learning.SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M,
+##                                       number_of_epochs, number_of_batches,
+##                                       data_proportion, online_learning,
+##                                       data_representation, cost_function,
+##                                       exact_error_eval, file_name, 1)
 ##print timer() - start
 
 
 # Data preprocessing
-[item, rel, attr, batch_size,
- number_of_batches, training_ex_idx,
- test_item_set, test_rel_set, test_attr_set] = NN_learning.Prepare_Learning(number_of_epochs,
-                                                                            number_of_batches, data_proportion,
-                                                                            online_learning, data_representation, file)
+[batch_size, number_of_batches,
+train_set, test_set] = NN_learning.Prepare_Learning(number_of_epochs, number_of_batches,
+                                                    data_proportion, online_learning,
+                                                    data_representation, file_name)
 
 # Learning
 [J, J_test, theta_history] = NN_learning.Learning(alpha, R, S, M, hidden_1, hidden_2,
-                                                  epsilon, batch_size, item, rel, attr,
-                                                  data_representation, data_proportion,
-                                                  cost_function, number_of_epochs, number_of_batches,
-                                                  training_ex_idx, test_item_set,
-                                                  test_rel_set, test_attr_set)
+                                                  epsilon, batch_size, data_representation,
+                                                  data_proportion, cost_function, number_of_epochs,
+                                                  number_of_batches, train_set, test_set, exact_error_eval)
 
 # Visualization
 NN_learning.disp_learning_dynamic(J, J_test)
@@ -107,8 +104,8 @@ print min(J), min(J_test)
 
 ### Check result of learning
 ##example =14
-##epoch =1800
-##check_results = neural_network.check_result(example, epoch, file, hidden_1,
+##epoch = 76799
+##check_results = neural_network.check_result(example, epoch, file_name, hidden_1,
 ##                                            hidden_2, theta_history, S)
 ##print check_results
 ##
@@ -123,21 +120,21 @@ print min(J), min(J_test)
 ####SA_test, SA_test_of] = NN_learning.Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
 ####                                                      hidden_1, hidden_2, epsilon, alpha, S, R, M,
 ####                                                      number_of_epochs, number_of_batches, data_proportion,
-####                                                      online_learning, data_representation, file)
+####                                                      online_learning, data_representation, file_name)
 ####print timer() - start
 ##
 ##[SA_train,SA_train_of,
 ##SA_test, SA_test_of] = NN_learning.cut_Structure_Analysis(hidden_1_max, hidden_2_max, num_init,
 ##                                                          hidden_1, hidden_2, epsilon, alpha, S, R, M,
 ##                                                          number_of_epochs, number_of_batches, data_proportion,
-##                                                          online_learning, data_representation, file)
+##                                                          online_learning, data_representation, file_name)
 ##
 ##
 ##
 ### current configuration
 ##cfg = dict(epsilon=epsilon, alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
 ##           number_of_batches=number_of_batches, data_proportion=data_proportion,
-##           online_learning=online_learnivng, file=file, hidden_1_max=hidden_1_max,
+##           online_learning=online_learnivng, file_name=file_name, hidden_1_max=hidden_1_max,
 ##           hidden_2_max=hidden_2_max, num_init=num_init)
 ##
 ##csv_opt = 'False'
@@ -148,18 +145,18 @@ print min(J), min(J_test)
 ##
 ##np.savetxt('SA/StructAn[h1max='+str(hidden_1_max)+', '+ \
 ##                             'h2max='+str(hidden_2_max)+', '+ \
-##                             'Ninit='+str(num_init)+']_'+file, J_SA, delimiter=',')
+##                             'Ninit='+str(num_init)+']_'+file_name, J_SA, delimiter=',')
 
 ### Load SA-results
-##file = 'eeee'
-##f = open(file, 'r')
+##file_name = 'eeee'
+##f = open(file_name, 'r')
 ##J_SA = pickle.load(f)
 ##[SA_train, SA_train_of, SA_test, SA_test_of] = J_SA
 ##
 ##
 ##
-##SA_file = 'SA/StructAn[h1max=2, h2max=3, Ninit=2]_ilashevskaya.csv'
-##loaded_J_SA = NN_learning.Load_SA_results(SA_file)
+##SA_file_name = 'SA/StructAn[h1max=2, h2max=3, Ninit=2]_ilashevskaya.csv'
+##loaded_J_SA = NN_learning.Load_SA_results(SA_file_name)
 ##
 ##
 ##
@@ -181,7 +178,7 @@ print min(J), min(J_test)
 ##    hidden_2 = [i]
 ##
 ##    [J, J_test, theta_history] = NN_learning.SNN([20], hidden_2, epsilon, alpha, R, M, number_of_epochs, number_of_batches,
-##                                            data_proportion, online_learning, file)
+##                                            data_proportion, online_learning, file_name)
 ##    J_neur[i,0] = J_test[-1]
 ##
 ##num_iter = range(len(J_neur))
@@ -210,7 +207,7 @@ print min(J), min(J_test)
 ### PCA dynamics
 ### Perform learning
 ##[J, J_test, theta_history] = NN_learning.SNN(hidden_1, hidden_2, epsilon, alpha,
-##        R, M, e, number_of_epochs, number_of_batches, data_proportion, online_learning, file)
+##        R, M, e, number_of_epochs, number_of_batches, data_proportion, online_learning, file_name)
 ##
 ### Drowing hidden layer activations for every iteration
 ##

@@ -15,6 +15,7 @@ import codecs
 import numpy as np
 import csv
 import os
+import xlrd
 
 
 """
@@ -59,7 +60,7 @@ def sigmoid_gradient(z, S):
     return S * q * (1 - q)
 
 
-def data_preparation_xls(file, data_representation):
+def data_preparation_xls(file_name, data_representation):
     """
     Prepare learning data from given xls-file.
     Takes file name and data_representation parameters written as strings.
@@ -73,7 +74,7 @@ def data_preparation_xls(file, data_representation):
     corresponding number equals one and others are zero.
     """
     # read file
-    rb = xlrd.open_workbook(file)
+    rb = xlrd.open_workbook(file_name)
     sheet = rb.sheet_by_name('Base')  # take data from particular page
 
     relations = sheet.col_values(0)[1:]  # take all the relation names
@@ -136,8 +137,9 @@ def data_preparation_xls(file, data_representation):
         for i in xrange(num_ex):
             attr_num[i] = data[i, 2] - 1
             attr_val[i] = data[i, 3]
+        attr_matrix = [attr_num, attr_val]
 
-        return item_matrix, rel_matrix, attr_num, attr_val
+        return item_matrix, rel_matrix, attr_matrix
 
 
 # Function to prepare full(complex) training examples
@@ -386,7 +388,7 @@ def forward_propagation(S, m, num_lay_1, num_lay_2, X, input_relation, theta_1,
     z_1[0] = X  # input data
     a_1[0] = np.hstack((np.ones((m, 1)), z_1[0]))  # add bias units
     if num_lay_1 == 1:    # Special condition for one layer subnetwork
-        z_1[1] = z_1[1] = np.dot(a_1[0], theta_1)
+        z_1[1] = np.dot(a_1[0], theta_1)
         a_1[1] = np.hstack((np.ones((m, 1)), sigmoid(z_1[1], S)))
     else:
         for i in xrange(1, num_lay_1 + 1):  # loop over the first subnetwork
@@ -409,7 +411,7 @@ def forward_propagation(S, m, num_lay_1, num_lay_2, X, input_relation, theta_1,
 
 def mean_squares(m, a_2, Y, data_representation):
     """ Compute least-squares cost function"""
-    if data_representation == 'complex' or 'large':
+    if (data_representation == 'complex') or (data_representation == 'large'):
         cost = np.sum((a_2[-1] - Y) ** 2) / m
     elif data_representation == 'separate':
         cost = 0
@@ -423,7 +425,7 @@ def cross_entropy(m, a_2, theta_1, theta_2, theta_relation,
                   num_lay_1, num_lay_2, R, Y, data_representation):
     """ Compute cross-entropy cost function"""
     # Average cost
-    if data_representation == 'complex' or 'large':
+    if (data_representation == 'complex') or (data_representation == 'large'):
         cost = np.sum(-Y * np.log(a_2[-1]) - (1 - Y) * np.log(1 - a_2[-1])) / m
     elif data_representation == 'separate':
         cost = 0
@@ -479,7 +481,7 @@ def back_propagation(S, m, a_1, a_2, input_relation, theta_1, theta_2, theta_rel
     rel_input_b = np.hstack((np.ones((m, 1)), input_relation)) # add bias to the relation input
     d_2 = range(num_lay_2 + 1)        # storage for delta values in the second subnet
     # compute error for the output layer
-    if data_representation =='complex' or 'large':
+    if (data_representation == 'complex') or (data_representation == 'large'):
         d_2[-1] = a_2[-1] - Y
     elif data_representation == 'separate':
         d_2[-1] = np.zeros((np.shape(a_2[-1])))
