@@ -359,7 +359,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs,
         time_int.append(np.zeros((number_of_epochs, number_of_batches)))
     [time_forward_prop, time_cost, time_test, time_back_prop, time_descent] = time_int
     # fit the progress bar
-#    gauge.SetRange(number_of_epochs)
+    gauge.SetRange(number_of_epochs)
     time_ext['variables, data_division'] = timer() - time
     time = timer()    # update timer
 
@@ -477,7 +477,7 @@ def SNN(hidden_1, hidden_2, epsilon, alpha, S, R, M, number_of_epochs,
 ##        # show progress
 ##        if data_representation == 'separate':
 ##            print 'epoch: '+str(epoch)+' / '+str(number_of_epochs)
-#        gauge.SetValue(epoch) # show progress
+        gauge.SetValue(epoch) # show progress
         time_epoch[epoch] = timer() - start_epoch        # epoch timing
 
     # Compute final error after all loops of learning (Training)

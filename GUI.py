@@ -25,8 +25,6 @@ from timeit import default_timer as timer
 import neural_network
 import NN_learning
 
-plot = 0
-
 
 def create(parent):
     return Frame1(parent)
@@ -35,17 +33,18 @@ def create(parent):
  wxID_FRAME1BTNSALOAD, wxID_FRAME1BTNSASAVE, wxID_FRAME1BTNSAVIS,
  wxID_FRAME1BTNSTRUCTANALYSIS, wxID_FRAME1BTNVISUALIZE,
  wxID_FRAME1CHBATCHSIZE, wxID_FRAME1CHCOSTFUNCTION, wxID_FRAME1CHCSV,
- wxID_FRAME1CHDATAREPRESENT, wxID_FRAME1GGLPROGESS, wxID_FRAME1GGSAPROGRESS,
- wxID_FRAME1PANEL1, wxID_FRAME1PANEL2, wxID_FRAME1PANEL3,
- wxID_FRAME1PANELPARAMETERS, wxID_FRAME1RBSAVISPARAMS,
- wxID_FRAME1SLIDERTESTSETSIZE, wxID_FRAME1STBATCHSIZE, wxID_FRAME1STCHECK,
- wxID_FRAME1STCOSTFUNCTION, wxID_FRAME1STDATAREPRESENT, wxID_FRAME1STEXAMPLE,
- wxID_FRAME1STHIDDEN, wxID_FRAME1STHIDDENNUMBER, wxID_FRAME1STITERATION,
- wxID_FRAME1STLEARNING, wxID_FRAME1STLERNINGRATE, wxID_FRAME1STMOMENTUM,
- wxID_FRAME1STNEPOCHS, wxID_FRAME1STNUMBEROFBATCHES, wxID_FRAME1STPARAMETERS,
- wxID_FRAME1STRANDINITNUMBER, wxID_FRAME1STREGULARIZATION,
- wxID_FRAME1STREPRESENTATION, wxID_FRAME1STREPRNUMBER,
- wxID_FRAME1STSAPROGRESS, wxID_FRAME1STSIGSLOPE,
+ wxID_FRAME1CHDATAREPRESENT, wxID_FRAME1CHEXACTERROREVAL,
+ wxID_FRAME1GGLPROGESS, wxID_FRAME1GGSAPROGRESS, wxID_FRAME1PANEL1,
+ wxID_FRAME1PANEL2, wxID_FRAME1PANEL3, wxID_FRAME1PANELPARAMETERS,
+ wxID_FRAME1RBSAVISPARAMS, wxID_FRAME1SLIDERTESTSETSIZE,
+ wxID_FRAME1STBATCHSIZE, wxID_FRAME1STCHECK, wxID_FRAME1STCOSTFUNCTION,
+ wxID_FRAME1STDATAREPRESENT, wxID_FRAME1STEXACTERROREVAL,
+ wxID_FRAME1STEXAMPLE, wxID_FRAME1STHIDDEN, wxID_FRAME1STHIDDENNUMBER,
+ wxID_FRAME1STITERATION, wxID_FRAME1STLEARNING, wxID_FRAME1STLERNINGRATE,
+ wxID_FRAME1STMOMENTUM, wxID_FRAME1STNEPOCHS, wxID_FRAME1STNUMBEROFBATCHES,
+ wxID_FRAME1STPARAMETERS, wxID_FRAME1STRANDINITNUMBER,
+ wxID_FRAME1STREGULARIZATION, wxID_FRAME1STREPRESENTATION,
+ wxID_FRAME1STREPRNUMBER, wxID_FRAME1STSAPROGRESS, wxID_FRAME1STSIGSLOPE,
  wxID_FRAME1STSTRUCTUREANALYSIS, wxID_FRAME1STTESTSETPERCENT,
  wxID_FRAME1STTESTSETSIZE, wxID_FRAME1STVISUALIZATION,
  wxID_FRAME1STWEIGHTSLIMIT, wxID_FRAME1TXTEXAMPLE, wxID_FRAME1TXTFILENAME,
@@ -55,15 +54,27 @@ def create(parent):
  wxID_FRAME1TXTRANDINITNUMBER, wxID_FRAME1TXTREGULARIZATION,
  wxID_FRAME1TXTREPRESENTATION, wxID_FRAME1TXTREPRNUMBER,
  wxID_FRAME1TXTSIGMOIDSLOPE, wxID_FRAME1TXTWEIGHTSLIMIT,
-] = [wx.NewId() for _init_ctrls in range(62)]
+] = [wx.NewId() for _init_ctrls in range(64)]
 
 class Frame1(wx.Frame):
     def _init_ctrls(self, prnt):
+        # load last parameters
+        if 'last_cfg.pkl' in os.listdir(os.getcwd()):
+            with open(os.getcwd()+'\last_cfg.pkl', 'rb') as f:
+                cfg = pickle.load(f)
+        else:
+        # set default parameters
+            cfg = dict(hidden_1=[6], hidden_2=[8], epsilon=0.5, alpha=0.3,
+                   S=3, R=0, M=0, number_of_epochs=50, number_of_batches=8,
+                   data_proportion=0.25, online_learning='on',
+                   data_representation='complex', cost_function='mean_squares',
+                   exact_error_eval=True, file_name=os.getcwd()+'\\01.csv')
+
         # generated method, don't edit
         wx.Frame.__init__(self, id=wxID_FRAME1, name='', parent=prnt,
-              pos=wx.Point(207, -12), size=wx.Size(646, 491),
+              pos=wx.Point(244, 16), size=wx.Size(656, 491),
               style=wx.DEFAULT_FRAME_STYLE, title='Frame1')
-        self.SetClientSize(wx.Size(638, 464))
+        self.SetClientSize(wx.Size(648, 464))
 
         self.panelParameters = wx.Panel(id=wxID_FRAME1PANELPARAMETERS,
               name=u'panelParameters', parent=self, pos=wx.Point(8, 8),
@@ -142,41 +153,43 @@ class Frame1(wx.Frame):
 
         self.txtRepresentation = wx.TextCtrl(id=wxID_FRAME1TXTREPRESENTATION,
               name=u'txtRepresentation', parent=self.panelParameters,
-              pos=wx.Point(136, 48), size=wx.Size(88, 21), style=0, value=u'6')
+              pos=wx.Point(136, 48), size=wx.Size(88, 21), style=0,
+              value=unicode(cfg['hidden_1'])[1:-1])
 
         self.txtHidden = wx.TextCtrl(id=wxID_FRAME1TXTHIDDEN, name=u'txtHidden',
               parent=self.panelParameters, pos=wx.Point(136, 72),
-              size=wx.Size(88, 21), style=0, value=u'8')
+              size=wx.Size(88, 21), style=0, value=unicode(cfg['hidden_2'])[1:-1])
 
         self.txtWeightsLimit = wx.TextCtrl(id=wxID_FRAME1TXTWEIGHTSLIMIT,
               name=u'txtWeightsLimit', parent=self.panelParameters,
               pos=wx.Point(136, 96), size=wx.Size(32, 21), style=0,
-              value=u'0.5')
+              value=unicode(cfg['epsilon']))
 
         self.txtLearningRate = wx.TextCtrl(id=wxID_FRAME1TXTLEARNINGRATE,
               name=u'txtLearningRate', parent=self.panelParameters,
               pos=wx.Point(136, 120), size=wx.Size(32, 21), style=0,
-              value=u'1')
+              value=unicode(cfg['alpha']))
 
         self.txtSigmoidSlope = wx.TextCtrl(id=wxID_FRAME1TXTSIGMOIDSLOPE,
               name=u'txtSigmoidSlope', parent=self.panelParameters,
               pos=wx.Point(136, 144), size=wx.Size(32, 21), style=0,
-              value=u'1.5')
+              value=unicode(cfg['S']))
 
         self.txtRegularization = wx.TextCtrl(id=wxID_FRAME1TXTREGULARIZATION,
               name=u'txtRegularization', parent=self.panelParameters,
               pos=wx.Point(136, 168), size=wx.Size(32, 21), style=0,
-              value=u'0')
+              value=unicode(cfg['R']))
 
         self.txtMomentum = wx.TextCtrl(id=wxID_FRAME1TXTMOMENTUM,
               name=u'txtMomentum', parent=self.panelParameters,
               pos=wx.Point(136, 192), size=wx.Size(32, 21), style=0,
-              value=u'0')
+              value=unicode(cfg['M']))
 
         self.sliderTestSetSize = wx.Slider(id=wxID_FRAME1SLIDERTESTSETSIZE,
               maxValue=100, minValue=0, name=u'sliderTestSetSize',
               parent=self.panelParameters, pos=wx.Point(128, 216),
-              size=wx.Size(96, 24), style=wx.SL_HORIZONTAL, value=25)
+              size=wx.Size(96, 24), style=wx.SL_HORIZONTAL,
+              value=int(cfg['data_proportion']*100))
         self.sliderTestSetSize.SetLabel(u'')
         self.sliderTestSetSize.Bind(wx.EVT_SCROLL,
               self.OnSliderTestSetSizeScroll)
@@ -185,24 +198,31 @@ class Frame1(wx.Frame):
               id=wxID_FRAME1CHDATAREPRESENT, name=u'chDataRepresent',
               parent=self.panelParameters, pos=wx.Point(136, 240),
               size=wx.Size(80, 21), style=0)
-        self.chDataRepresent.SetSelection(1)
+        self.chDataRepresent.SetSelection(['complex', 'separate'].index(cfg['data_representation']))
 
         self.txtNEpochs = wx.TextCtrl(id=wxID_FRAME1TXTNEPOCHS,
               name=u'txtNEpochs', parent=self.panelParameters, pos=wx.Point(136,
-              264), size=wx.Size(64, 21), style=0, value=u'100')
+              264), size=wx.Size(64, 21), style=0,
+              value=unicode(cfg['number_of_epochs']))
 
         self.chBatchSize = wx.Choice(choices=['full batch', 'mini batch',
               'online'], id=wxID_FRAME1CHBATCHSIZE, name='chBatchSize',
               parent=self.panelParameters, pos=wx.Point(136, 288),
               size=wx.Size(80, 21), style=0)
-        self.chBatchSize.SetSelection(1)
+        if cfg['online_learning'] == 'on':
+            self.chBatchSize.SetSelection(2)
+        else:
+            if number_of_batches == 1:
+                self.chBatchSize.SetSelection(0)
+            else:
+                self.chBatchSize.SetSelection(1)
         self.chBatchSize.Bind(wx.EVT_CHOICE, self.OnChBatchSizeChoice,
               id=wxID_FRAME1CHBATCHSIZE)
 
         self.txtNumberOfBatches = wx.TextCtrl(id=wxID_FRAME1TXTNUMBEROFBATCHES,
               name=u'txtNumberOfBatches', parent=self.panelParameters,
               pos=wx.Point(136, 312), size=wx.Size(40, 21), style=0,
-              value=u'10')
+              value=unicode(cfg['number_of_batches']))
         self.txtNumberOfBatches.SetEditable(True)
         self.txtNumberOfBatches.Enable(False)
 
@@ -220,12 +240,12 @@ class Frame1(wx.Frame):
 
         self.txtFilePath = wx.TextCtrl(id=wxID_FRAME1TXTFILEPATH,
               name=u'txtFilePath', parent=self.panelParameters, pos=wx.Point(16,
-              384), size=wx.Size(180, 21), style=0,
-              value=u'c:\\SNN\\Learn_data\\ilashevskaya.csv')
+              392), size=wx.Size(180, 21), style=0,
+              value=unicode(cfg['file_name']))
 
         self.btnFile = wx.Button(id=wxID_FRAME1BTNFILE, label=u'File',
               name=u'btnFile', parent=self.panelParameters, pos=wx.Point(208,
-              384), size=wx.Size(72, 24), style=0)
+              392), size=wx.Size(72, 24), style=0)
         self.btnFile.Bind(wx.EVT_BUTTON, self.OnBtnFileButton,
               id=wxID_FRAME1BTNFILE)
 
@@ -354,7 +374,7 @@ class Frame1(wx.Frame):
 
         self.txtExample = wx.TextCtrl(id=wxID_FRAME1TXTEXAMPLE,
               name=u'txtExample', parent=self.panel3, pos=wx.Point(16, 48),
-              size=wx.Size(80, 21), style=0, value=u'')
+              size=wx.Size(80, 21), style=0, value=u'0')
 
         self.txtIteration = wx.TextCtrl(id=wxID_FRAME1TXTITERATION,
               name=u'txtIteration', parent=self.panel3, pos=wx.Point(112, 48),
@@ -381,8 +401,18 @@ class Frame1(wx.Frame):
               'cross-entropy'], id=wxID_FRAME1CHCOSTFUNCTION,
               name=u'chCostFunction', parent=self.panelParameters,
               pos=wx.Point(136, 336), size=wx.Size(96, 21), style=0)
-        self.chCostFunction.SetSelection(0)
+        self.chCostFunction.SetSelection(
+            ['least squares','cross-entropy'].index(cfg['cost_function']))
 
+        self.stExactErrorEval = wx.StaticText(id=wxID_FRAME1STEXACTERROREVAL,
+              label=u'Exact error evaluation', name=u'stExactErrorEval',
+              parent=self.panelParameters, pos=wx.Point(16, 368),
+              size=wx.Size(108, 13), style=0)
+
+        self.chExactErrorEval = wx.CheckBox(id=wxID_FRAME1CHEXACTERROREVAL,
+              label=u'', name=u'chExactErrorEval', parent=self.panelParameters,
+              pos=wx.Point(144, 368), size=wx.Size(70, 13), style=0)
+        self.chExactErrorEval.SetValue(True)
 
     def __init__(self, parent):
             self._init_ctrls(parent)
@@ -443,12 +473,20 @@ class Frame1(wx.Frame):
             self.txtNumberOfBatches.SetValue('number of examples')
             number_of_batches = 'none'
         if self.chCostFunction.GetSelection() == 0:
-            cost_function = 'least_squares'
+            cost_function = 'mean_squares'
         elif self.chCostFunction.GetSelection() == 1:
             cost_function = 'cross_entropy'
+        exact_error_eval = self.chExactErrorEval.GetValue()
         gauge = self.ggLprogess
-        # Set file name
-        file = self.txtFilePath.GetValue()
+        file_name = self.txtFilePath.GetValue() # Set file name
+        # Save current cfg
+        cfg = dict(hidden_1=hidden_1, hidden_2=hidden_2, epsilon=epsilon, alpha=alpha,
+                   S=S, R=R, M=M, number_of_epochs=number_of_epochs, number_of_batches=number_of_batches,
+                   data_proportion=data_proportion, online_learning=online_learning,
+                   data_representation=data_representation, cost_function=cost_function,
+                   exact_error_eval=exact_error_eval, file_name=file_name)
+
+        NN_learning.save_cfg(cfg, os.getcwd()+'\last', txt=False)
 
         # Perform learning
         (self.btnLearn.J,
@@ -458,43 +496,32 @@ class Frame1(wx.Frame):
                                                S, R, M, number_of_epochs,
                                                number_of_batches, data_proportion,
                                                online_learning, data_representation,
-                                               cost_function, file, gauge)
+                                               cost_function, exact_error_eval,
+                                               file_name, gauge)
         self.txtIteration.SetValue(str(len(self.btnLearn.J) - 1))  # Set default value of  iteration
         event.Skip()
 
 
-    def OnBtnVisualizeButton(self, event, plot):
+    def OnBtnVisualizeButton(self, event):
 ##        if self.btnVisualize.fig:
 ##            dlg = wx.MessageDialog(None, 'Close the previous figure', 'Warning!',
 ##                                   wx.OK | wx.ICON_INFORMATION)
 ##            dlg.ShowModal()
 ##            dlg.Destroy()
 ##        else:
-        if plot == 0:
-            self.btnVisualize.fig = pp.figure(1)
-            J = self.btnLearn.J
-            J_test = self.btnLearn.J_test
-            num_iter = range(len(J))
-            pp.subplot(211)
-            pp.plot(num_iter, J)
-            pp.ylabel('Error')
-            pp.title('Training error')
-            pp.subplot(212)
-            pp.plot(num_iter, J_test)
-            pp.xlabel('Iteration')
-            pp.ylabel('Error')
-            pp.title('Test error')
-            pp.show()
-            plot = 1
-            plot = 0
-        else :
-            dlg = wx.MessageDialog(None, 'Close the previous figure', 'Warning!',
-                                   wx.OK | wx.ICON_INFORMATION)
-            dlg.ShowModal()
-            dlg.Destroy()
-
-
-##        self.btnVisualize.fig = False
+        J = self.btnLearn.J
+        J_test = self.btnLearn.J_test
+        num_iter = range(len(J))
+        pp.subplot(211)
+        pp.plot(num_iter, J)
+        pp.ylabel('Error')
+        pp.title('Training error')
+        pp.subplot(212)
+        pp.plot(num_iter, J_test)
+        pp.xlabel('Iteration')
+        pp.ylabel('Error')
+        pp.title('Test error')
+        pp.show()
         event.Skip()
 
 
@@ -524,11 +551,11 @@ class Frame1(wx.Frame):
             self.txtNumberOfBatches.SetValue('number of examples')
             number_of_batches = 'none'
         if self.chCostFunction.GetSelection() == 0:
-            cost_function = 'least_squares'
+            cost_function = 'mean_squares'
         elif self.chCostFunction.GetSelection() == 1:
             cost_function = 'cross_entropy'
         # Set file name
-        file = self.txtFilePath.GetValue()
+        file_name = self.txtFilePath.GetValue()
         # Set SA parameters
         hidden_1_max = int(self.txtReprNumber.GetValue())
         hidden_2_max = int(self.txtHiddenNumber.GetValue())
@@ -539,7 +566,7 @@ class Frame1(wx.Frame):
          number_of_batches, training_ex_idx,
          test_item_set, test_rel_set, test_attr_set] = NN_learning.Prepare_Learning(epsilon, number_of_epochs,
                                                                                     number_of_batches, data_proportion,
-                                                                                    online_learning, data_representation, file)
+                                                                                    online_learning, data_representation, file_name)
         # Prepare arrays to fill with error values
         SA_train = np.zeros((hidden_1_max, hidden_2_max))
         SA_train_of = np.zeros((hidden_1_max, hidden_2_max))
@@ -571,7 +598,7 @@ class Frame1(wx.Frame):
                 self.btnStructAnalysis.J_SA = [SA_train, SA_train_of, SA_test, SA_test_of]
                 self.btnStructAnalysis.cfg = dict(epsilon=epsilon, alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
                                                   number_of_batches=number_of_batches, data_proportion=data_proportion, cost_function=cost_function,
-                                                  online_learning=online_learning, file=file, hidden_1_max=hidden_1_max,
+                                                  online_learning=online_learning, file=file,    hidden_1_max=hidden_1_max,
                                                   hidden_2_max=hidden_2_max, num_init=num_init)
         event.Skip()
 
@@ -620,12 +647,12 @@ class Frame1(wx.Frame):
     def OnBtnCheckButton(self, event):
         example = int(self.txtExample.GetValue())
         epoch = int(self.txtIteration.GetValue())
-        file = self.txtFilePath.GetValue()
+        file_name = self.txtFilePath.GetValue()
         hidden_1 = map(int, self.txtRepresentation.GetValue().split(','))
         hidden_2 = map(int, self.txtHidden.GetValue().split(','))
         S = float(self.txtSigmoidSlope.GetValue())
         theta_history = self.btnLearn.theta_history
-        check_results = neural_network.check_result(example, epoch, file, hidden_1,
+        check_results = neural_network.check_result(example, epoch, file_name, hidden_1,
                                                     hidden_2, theta_history, S)
         caption = 'Check results'
         dlg = wx.MessageDialog(None, check_results, caption, wx.OK | wx.ICON_INFORMATION)

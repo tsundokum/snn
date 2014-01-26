@@ -791,7 +791,7 @@ def verify_gradient(gradient_1, gradient_2, gradient_rel, numgrad_1, numgrad_2, 
     print "differences in the second subnetwork: ",diff_2
 
 
-def check_result(example, epoch, file, hidden_1, hidden_2, theta_history, S):
+def check_result(example, epoch, file_name, hidden_1, hidden_2, theta_history, S):
     """
     Takes one example from learning data(example) and learned weight matrices
     from theta_hisory according to the particular epoch of learning.
@@ -799,7 +799,10 @@ def check_result(example, epoch, file, hidden_1, hidden_2, theta_history, S):
     and original values(teacher).
     """
     # Import data
-    [item, rel, attr] = complex_data_preparation(file)
+    if file_name[-4:] == '.xls':
+        [item, rel, attr] = data_preparation_xls(file_name, 'complex')
+    elif file_name[-4:] == '.csv':
+        [item, rel, attr] = complex_data_preparation(file_name)
     # Assign local variables
     [theta_1, theta_2, theta_relation] = theta_history[epoch]
     num_lay_1 = len(hidden_1)
