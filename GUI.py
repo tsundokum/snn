@@ -58,23 +58,11 @@ def create(parent):
 
 class Frame1(wx.Frame):
     def _init_ctrls(self, prnt):
-        # load last parameters
-        if 'last_cfg.pkl' in os.listdir(os.getcwd()):
-            with open(os.getcwd()+'\last_cfg.pkl', 'rb') as f:
-                cfg = pickle.load(f)
-        else:
-        # set default parameters
-            cfg = dict(hidden_1=[6], hidden_2=[8], epsilon=0.5, alpha=0.3,
-                   S=3, R=0, M=0, number_of_epochs=50, number_of_batches=8,
-                   data_proportion=0.25, online_learning='on',
-                   data_representation='complex', cost_function='mean_squares',
-                   exact_error_eval=True, file_name=os.getcwd()+'\\01.csv')
-
         # generated method, don't edit
         wx.Frame.__init__(self, id=wxID_FRAME1, name='', parent=prnt,
-              pos=wx.Point(244, 16), size=wx.Size(656, 491),
-              style=wx.DEFAULT_FRAME_STYLE, title='Frame1')
-        self.SetClientSize(wx.Size(648, 464))
+              pos=wx.Point(331, 3), size=wx.Size(635, 493),
+              style=wx.DEFAULT_FRAME_STYLE, title='SNN')
+        self.SetClientSize(wx.Size(627, 466))
 
         self.panelParameters = wx.Panel(id=wxID_FRAME1PANELPARAMETERS,
               name=u'panelParameters', parent=self, pos=wx.Point(8, 8),
@@ -153,44 +141,36 @@ class Frame1(wx.Frame):
 
         self.txtRepresentation = wx.TextCtrl(id=wxID_FRAME1TXTREPRESENTATION,
               name=u'txtRepresentation', parent=self.panelParameters,
-              pos=wx.Point(136, 48), size=wx.Size(88, 21), style=0,
-              value=unicode(cfg['hidden_1'])[1:-1])
+              pos=wx.Point(136, 48), size=wx.Size(88, 21), style=0, value=u'')
 
         self.txtHidden = wx.TextCtrl(id=wxID_FRAME1TXTHIDDEN, name=u'txtHidden',
               parent=self.panelParameters, pos=wx.Point(136, 72),
-              size=wx.Size(88, 21), style=0, value=unicode(cfg['hidden_2'])[1:-1])
+              size=wx.Size(88, 21), style=0, value=u'')
 
         self.txtWeightsLimit = wx.TextCtrl(id=wxID_FRAME1TXTWEIGHTSLIMIT,
               name=u'txtWeightsLimit', parent=self.panelParameters,
-              pos=wx.Point(136, 96), size=wx.Size(32, 21), style=0,
-              value=unicode(cfg['epsilon']))
+              pos=wx.Point(136, 96), size=wx.Size(32, 21), style=0, value=u'')
 
         self.txtLearningRate = wx.TextCtrl(id=wxID_FRAME1TXTLEARNINGRATE,
               name=u'txtLearningRate', parent=self.panelParameters,
-              pos=wx.Point(136, 120), size=wx.Size(32, 21), style=0,
-              value=unicode(cfg['alpha']))
+              pos=wx.Point(136, 120), size=wx.Size(32, 21), style=0, value=u'')
 
         self.txtSigmoidSlope = wx.TextCtrl(id=wxID_FRAME1TXTSIGMOIDSLOPE,
               name=u'txtSigmoidSlope', parent=self.panelParameters,
-              pos=wx.Point(136, 144), size=wx.Size(32, 21), style=0,
-              value=unicode(cfg['S']))
+              pos=wx.Point(136, 144), size=wx.Size(32, 21), style=0, value=u'')
 
         self.txtRegularization = wx.TextCtrl(id=wxID_FRAME1TXTREGULARIZATION,
               name=u'txtRegularization', parent=self.panelParameters,
-              pos=wx.Point(136, 168), size=wx.Size(32, 21), style=0,
-              value=unicode(cfg['R']))
+              pos=wx.Point(136, 168), size=wx.Size(32, 21), style=0, value=u'')
 
         self.txtMomentum = wx.TextCtrl(id=wxID_FRAME1TXTMOMENTUM,
               name=u'txtMomentum', parent=self.panelParameters,
-              pos=wx.Point(136, 192), size=wx.Size(32, 21), style=0,
-              value=unicode(cfg['M']))
+              pos=wx.Point(136, 192), size=wx.Size(32, 21), style=0, value=u'')
 
         self.sliderTestSetSize = wx.Slider(id=wxID_FRAME1SLIDERTESTSETSIZE,
               maxValue=100, minValue=0, name=u'sliderTestSetSize',
               parent=self.panelParameters, pos=wx.Point(128, 216),
-              size=wx.Size(96, 24), style=wx.SL_HORIZONTAL,
-              value=int(cfg['data_proportion']*100))
-        self.sliderTestSetSize.SetLabel(u'')
+              size=wx.Size(96, 24), style=wx.SL_HORIZONTAL, value=0)
         self.sliderTestSetSize.Bind(wx.EVT_SCROLL,
               self.OnSliderTestSetSizeScroll)
 
@@ -198,39 +178,26 @@ class Frame1(wx.Frame):
               id=wxID_FRAME1CHDATAREPRESENT, name=u'chDataRepresent',
               parent=self.panelParameters, pos=wx.Point(136, 240),
               size=wx.Size(80, 21), style=0)
-        self.chDataRepresent.SetSelection(['complex', 'separate'].index(cfg['data_representation']))
 
         self.txtNEpochs = wx.TextCtrl(id=wxID_FRAME1TXTNEPOCHS,
               name=u'txtNEpochs', parent=self.panelParameters, pos=wx.Point(136,
-              264), size=wx.Size(64, 21), style=0,
-              value=unicode(cfg['number_of_epochs']))
+              264), size=wx.Size(64, 21), style=0, value=u'')
 
         self.chBatchSize = wx.Choice(choices=['full batch', 'mini batch',
               'online'], id=wxID_FRAME1CHBATCHSIZE, name='chBatchSize',
               parent=self.panelParameters, pos=wx.Point(136, 288),
               size=wx.Size(80, 21), style=0)
-        if cfg['online_learning'] == 'on':
-            self.chBatchSize.SetSelection(2)
-        else:
-            if number_of_batches == 1:
-                self.chBatchSize.SetSelection(0)
-            else:
-                self.chBatchSize.SetSelection(1)
         self.chBatchSize.Bind(wx.EVT_CHOICE, self.OnChBatchSizeChoice,
               id=wxID_FRAME1CHBATCHSIZE)
 
         self.txtNumberOfBatches = wx.TextCtrl(id=wxID_FRAME1TXTNUMBEROFBATCHES,
               name=u'txtNumberOfBatches', parent=self.panelParameters,
-              pos=wx.Point(136, 312), size=wx.Size(40, 21), style=0,
-              value=unicode(cfg['number_of_batches']))
-        self.txtNumberOfBatches.SetEditable(True)
-        self.txtNumberOfBatches.Enable(False)
+              pos=wx.Point(136, 312), size=wx.Size(40, 21), style=0, value=u'')
 
         self.stNumberOfBatches = wx.StaticText(id=wxID_FRAME1STNUMBEROFBATCHES,
               label=u'Number of batches', name=u'stNumberOfBatches',
               parent=self.panelParameters, pos=wx.Point(32, 312),
               size=wx.Size(92, 13), style=0)
-        self.stNumberOfBatches.Enable(False)
 
         self.stLearning = wx.StaticText(id=wxID_FRAME1STLEARNING,
               label=u'Learning', name=u'stLearning', parent=self.panel2,
@@ -240,8 +207,7 @@ class Frame1(wx.Frame):
 
         self.txtFilePath = wx.TextCtrl(id=wxID_FRAME1TXTFILEPATH,
               name=u'txtFilePath', parent=self.panelParameters, pos=wx.Point(16,
-              392), size=wx.Size(180, 21), style=0,
-              value=unicode(cfg['file_name']))
+              392), size=wx.Size(180, 21), style=0, value=u'')
 
         self.btnFile = wx.Button(id=wxID_FRAME1BTNFILE, label=u'File',
               name=u'btnFile', parent=self.panelParameters, pos=wx.Point(208,
@@ -401,8 +367,7 @@ class Frame1(wx.Frame):
               'cross-entropy'], id=wxID_FRAME1CHCOSTFUNCTION,
               name=u'chCostFunction', parent=self.panelParameters,
               pos=wx.Point(136, 336), size=wx.Size(96, 21), style=0)
-        self.chCostFunction.SetSelection(
-            ['least squares','cross-entropy'].index(cfg['cost_function']))
+        self.chCostFunction.SetSelection(0)
 
         self.stExactErrorEval = wx.StaticText(id=wxID_FRAME1STEXACTERROREVAL,
               label=u'Exact error evaluation', name=u'stExactErrorEval',
@@ -412,10 +377,44 @@ class Frame1(wx.Frame):
         self.chExactErrorEval = wx.CheckBox(id=wxID_FRAME1CHEXACTERROREVAL,
               label=u'', name=u'chExactErrorEval', parent=self.panelParameters,
               pos=wx.Point(144, 368), size=wx.Size(70, 13), style=0)
-        self.chExactErrorEval.SetValue(True)
 
     def __init__(self, parent):
-            self._init_ctrls(parent)
+        self._init_ctrls(parent)
+        # load last parameters
+        if 'last_cfg.pkl' in os.listdir(os.getcwd()):
+            with open(os.getcwd()+'\last_cfg.pkl', 'rb') as f:
+                cfg = pickle.load(f)
+        else:
+        # set default parameters
+            cfg = dict(hidden_1=[6], hidden_2=[8], epsilon=0.5, alpha=0.3,
+                   S=3, R=0, M=0, number_of_epochs=50, number_of_batches=8,
+                   data_proportion=0.25, online_learning='on',
+                   data_representation='complex', cost_function='mean_squares',
+                   exact_error_eval=True, file_name=os.getcwd()+'\\01.csv')
+        # set values in vidgets
+        self.txtRepresentation.SetValue(unicode(cfg['hidden_1'])[1:-1])
+        self.txtHidden.SetValue(unicode(cfg['hidden_2'])[1:-1])
+        self.txtWeightsLimit.SetValue(unicode(cfg['epsilon']))
+        self.txtLearningRate.SetValue(unicode(cfg['alpha']))
+        self.txtSigmoidSlope.SetValue(unicode(cfg['R']))
+        self.txtRegularization.SetValue(unicode(cfg['S']))
+        self.txtMomentum.SetValue(unicode(cfg['M']))
+        self.sliderTestSetSize.SetValue(int(cfg['data_proportion']*100))
+        self.chDataRepresent.SetSelection(['complex','separate'].index(cfg['data_representation']))
+        self.sliderTestSetSize.SetValue(int(cfg['data_proportion']))
+        self.sliderTestSetSize.SetLabel(unicode(cfg['data_proportion']))
+        self.txtNEpochs.SetValue(unicode(cfg['number_of_epochs']))
+        if cfg['online_learning'] == 'on':
+            self.chBatchSize.SetSelection(2)
+        else:
+            if cfg['number_of_batches'] == 1:
+                self.chBatchSize.SetSelection(0)
+            else:
+                self.chBatchSize.SetSelection(1)
+        self.txtNumberOfBatches.SetValue(unicode(cfg['number_of_batches']))
+        self.txtFilePath.SetValue(unicode(cfg['file_name']))
+        self.chCostFunction.SetSelection(['mean_squares','cross_entropy'].index(cfg['cost_function']))
+        self.chExactErrorEval.SetValue(cfg['exact_error_eval'])
 
     def OnSliderTestSetSizeScroll(self, event):
         self.stTestSetPercent.SetLabel(str(self.sliderTestSetSize.GetValue())+'%')
@@ -562,11 +561,10 @@ class Frame1(wx.Frame):
         num_init = int(self.txtRandInitNumber.GetValue())     # number of random initializations
         self.ggSAprogress.SetRange(hidden_1_max * hidden_2_max)    # det gauge range
         # Prepare date from given file
-        [item, rel, attr, batch_size,
-         number_of_batches, training_ex_idx,
-         test_item_set, test_rel_set, test_attr_set] = NN_learning.Prepare_Learning(epsilon, number_of_epochs,
-                                                                                    number_of_batches, data_proportion,
-                                                                                    online_learning, data_representation, file_name)
+        [batch_size, number_of_batches,
+        train_set, test_set] = NN_learning.Prepare_Learning(number_of_epochs, number_of_batches,
+                                                            data_proportion, online_learning,
+                                                            data_representation, file_name)
         # Prepare arrays to fill with error values
         SA_train = np.zeros((hidden_1_max, hidden_2_max))
         SA_train_of = np.zeros((hidden_1_max, hidden_2_max))
@@ -579,13 +577,13 @@ class Frame1(wx.Frame):
             for j in range(hidden_1_max):  # Loop over  the representaton layer
                 hidden_1 = [j+1]             # Set number of neurons in the first layer(representation)
                 # Compute errors over several random initializations
-                [train_init, train_init_of,
-                 test_init, test_init_of] = NN_learning.Rand_Inits(num_init, alpha, R, S, M, hidden_1, hidden_2,
-                                                                   epsilon, batch_size, item, rel, attr,
-                                                                   data_representation, data_proportion, cost_function,
-                                                                   number_of_epochs, number_of_batches,
-                                                                   training_ex_idx, test_item_set,
-                                                                   test_rel_set, test_attr_set)
+                [train_init,
+                 train_init_of,
+                 test_init,
+                 test_init_of] = Rand_Inits(num_init, alpha, R, S, M, hidden_1, hidden_2,
+                                            epsilon, data_representation, data_proportion,
+                                            cost_function, number_of_epochs, number_of_batches,
+                                            exact_error_eval, batch_size, train_set, test_set)
                  # take average error value
                 SA_train[j, i] = np.average(train_init)
                 SA_train_of[j, i] = np.average(train_init_of)
@@ -625,7 +623,6 @@ class Frame1(wx.Frame):
             J_SA = pickle.load(loaded_SA)
             loaded_SA.close()
             self.btnStructAnalysis.J_SA = J_SA
-
         dlg.Destroy()
         event.Skip()
 
@@ -665,5 +662,4 @@ if __name__ == '__main__':
     app = wx.PySimpleApp()
     frame = create(None)
     frame.Show()
-
     app.MainLoop()
