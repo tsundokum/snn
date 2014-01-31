@@ -24,45 +24,48 @@ from timeit import default_timer as timer
 
 import neural_network
 import NN_learning
+import NN_analysis
 
 
 def create(parent):
     return Frame1(parent)
 
-[wxID_FRAME1, wxID_FRAME1BTNCHECK, wxID_FRAME1BTNFILE, wxID_FRAME1BTNLEARN,
- wxID_FRAME1BTNSALOAD, wxID_FRAME1BTNSASAVE, wxID_FRAME1BTNSAVIS,
- wxID_FRAME1BTNSTRUCTANALYSIS, wxID_FRAME1BTNVISUALIZE,
- wxID_FRAME1CHBATCHSIZE, wxID_FRAME1CHCOSTFUNCTION, wxID_FRAME1CHCSV,
+[wxID_FRAME1, wxID_FRAME1BTNCHECK, wxID_FRAME1BTNFILE, wxID_FRAME1BTNGMA,
+ wxID_FRAME1BTNLEARN, wxID_FRAME1BTNSAANALYSE, wxID_FRAME1BTNSAVIZUALISE,
+ wxID_FRAME1BTNSTRUCTANALYSIS, wxID_FRAME1BTNVISUALIZE, wxID_FRAME1BUTTON1,
+ wxID_FRAME1CHBATCHSIZE, wxID_FRAME1CHCOSTFUNCTION,
  wxID_FRAME1CHDATAREPRESENT, wxID_FRAME1CHEXACTERROREVAL,
- wxID_FRAME1GGLPROGESS, wxID_FRAME1GGSAPROGRESS, wxID_FRAME1PANEL1,
- wxID_FRAME1PANEL2, wxID_FRAME1PANEL3, wxID_FRAME1PANELPARAMETERS,
- wxID_FRAME1RBSAVISPARAMS, wxID_FRAME1SLIDERTESTSETSIZE,
+ wxID_FRAME1CHTRAINEVAL, wxID_FRAME1GGLPROGESS, wxID_FRAME1GGSAPROGRESS,
+ wxID_FRAME1PANEL1, wxID_FRAME1PANEL2, wxID_FRAME1PANEL3,
+ wxID_FRAME1PANELPARAMETERS, wxID_FRAME1SLIDERTESTSETSIZE,
  wxID_FRAME1STBATCHSIZE, wxID_FRAME1STCHECK, wxID_FRAME1STCOSTFUNCTION,
  wxID_FRAME1STDATAREPRESENT, wxID_FRAME1STEXACTERROREVAL,
  wxID_FRAME1STEXAMPLE, wxID_FRAME1STHIDDEN, wxID_FRAME1STHIDDENNUMBER,
  wxID_FRAME1STITERATION, wxID_FRAME1STLEARNING, wxID_FRAME1STLERNINGRATE,
  wxID_FRAME1STMOMENTUM, wxID_FRAME1STNEPOCHS, wxID_FRAME1STNUMBEROFBATCHES,
- wxID_FRAME1STPARAMETERS, wxID_FRAME1STRANDINITNUMBER,
- wxID_FRAME1STREGULARIZATION, wxID_FRAME1STREPRESENTATION,
- wxID_FRAME1STREPRNUMBER, wxID_FRAME1STSAPROGRESS, wxID_FRAME1STSIGSLOPE,
+ wxID_FRAME1STOUTDIR, wxID_FRAME1STPARAMETERS, wxID_FRAME1STPATHFILEDIR,
+ wxID_FRAME1STRANDINITNUMBER, wxID_FRAME1STREGULARIZATION,
+ wxID_FRAME1STREMAININGTIME, wxID_FRAME1STREPRESENTATION,
+ wxID_FRAME1STREPRNUMBER, wxID_FRAME1STSIGSLOPE,
  wxID_FRAME1STSTRUCTUREANALYSIS, wxID_FRAME1STTESTSETPERCENT,
- wxID_FRAME1STTESTSETSIZE, wxID_FRAME1STVISUALIZATION,
- wxID_FRAME1STWEIGHTSLIMIT, wxID_FRAME1TXTEXAMPLE, wxID_FRAME1TXTFILENAME,
- wxID_FRAME1TXTFILEPATH, wxID_FRAME1TXTHIDDEN, wxID_FRAME1TXTHIDDENNUMBER,
- wxID_FRAME1TXTITERATION, wxID_FRAME1TXTLEARNINGRATE, wxID_FRAME1TXTMOMENTUM,
- wxID_FRAME1TXTNEPOCHS, wxID_FRAME1TXTNUMBEROFBATCHES,
- wxID_FRAME1TXTRANDINITNUMBER, wxID_FRAME1TXTREGULARIZATION,
- wxID_FRAME1TXTREPRESENTATION, wxID_FRAME1TXTREPRNUMBER,
+ wxID_FRAME1STTESTSETSIZE, wxID_FRAME1STTRAINEVAL, wxID_FRAME1STWEIGHTSLIMIT,
+ wxID_FRAME1TXTEXAMPLE, wxID_FRAME1TXTFILEPATH, wxID_FRAME1TXTHIDDEN,
+ wxID_FRAME1TXTHIDDENRANGE, wxID_FRAME1TXTITERATION,
+ wxID_FRAME1TXTLEARNINGRATE, wxID_FRAME1TXTMOMENTUM, wxID_FRAME1TXTNEPOCHS,
+ wxID_FRAME1TXTNUMBEROFBATCHES, wxID_FRAME1TXTOUTDIR,
+ wxID_FRAME1TXTPATHFILEDIR, wxID_FRAME1TXTRANDINITNUMBER,
+ wxID_FRAME1TXTREGULARIZATION, wxID_FRAME1TXTREMAININGTIME,
+ wxID_FRAME1TXTREPRESENTATION, wxID_FRAME1TXTREPRRANGE,
  wxID_FRAME1TXTSIGMOIDSLOPE, wxID_FRAME1TXTWEIGHTSLIMIT,
-] = [wx.NewId() for _init_ctrls in range(64)]
+] = [wx.NewId() for _init_ctrls in range(68)]
 
 class Frame1(wx.Frame):
     def _init_ctrls(self, prnt):
         # generated method, don't edit
         wx.Frame.__init__(self, id=wxID_FRAME1, name='', parent=prnt,
-              pos=wx.Point(331, 3), size=wx.Size(635, 493),
+              pos=wx.Point(18, 76), size=wx.Size(672, 491),
               style=wx.DEFAULT_FRAME_STYLE, title='SNN')
-        self.SetClientSize(wx.Size(627, 466))
+        self.SetClientSize(wx.Size(664, 464))
 
         self.panelParameters = wx.Panel(id=wxID_FRAME1PANELPARAMETERS,
               name=u'panelParameters', parent=self, pos=wx.Point(8, 8),
@@ -120,9 +123,8 @@ class Frame1(wx.Frame):
               size=wx.Size(61, 13), style=0)
 
         self.stTestSetPercent = wx.StaticText(id=wxID_FRAME1STTESTSETPERCENT,
-              label=u'25%', name='stTestSetPercent',
-              parent=self.panelParameters, pos=wx.Point(232, 216),
-              size=wx.Size(24, 16), style=0)
+              label=u'', name='stTestSetPercent', parent=self.panelParameters,
+              pos=wx.Point(232, 216), size=wx.Size(24, 16), style=0)
 
         self.stDataRepresent = wx.StaticText(id=wxID_FRAME1STDATAREPRESENT,
               label=u'Data representation', name=u'stDataRepresent',
@@ -222,7 +224,7 @@ class Frame1(wx.Frame):
               id=wxID_FRAME1BTNLEARN)
 
         self.panel1 = wx.Panel(id=wxID_FRAME1PANEL1, name='panel1', parent=self,
-              pos=wx.Point(304, 136), size=wx.Size(328, 320),
+              pos=wx.Point(424, 8), size=wx.Size(232, 448),
               style=wx.TAB_TRAVERSAL)
 
         self.btnVisualize = wx.Button(id=wxID_FRAME1BTNVISUALIZE,
@@ -233,108 +235,61 @@ class Frame1(wx.Frame):
 
         self.stStructureAnalysis = wx.StaticText(id=wxID_FRAME1STSTRUCTUREANALYSIS,
               label=u'Structure Analysis', name=u'stStructureAnalysis',
-              parent=self.panel1, pos=wx.Point(72, 16), size=wx.Size(185, 24),
+              parent=self.panel1, pos=wx.Point(16, 8), size=wx.Size(185, 24),
               style=0)
         self.stStructureAnalysis.SetFont(wx.Font(16, wx.SWISS, wx.NORMAL,
               wx.BOLD, False, u'Arial'))
 
         self.btnStructAnalysis = wx.Button(id=wxID_FRAME1BTNSTRUCTANALYSIS,
-              label=u'Analyse', name=u'btnStructAnalysis', parent=self.panel1,
-              pos=wx.Point(16, 128), size=wx.Size(64, 32), style=0)
+              label=u'SA', name=u'btnStructAnalysis', parent=self.panel1,
+              pos=wx.Point(8, 280), size=wx.Size(96, 24), style=0)
         self.btnStructAnalysis.Bind(wx.EVT_BUTTON,
               self.OnBtnStructAnalysisButton, id=wxID_FRAME1BTNSTRUCTANALYSIS)
 
-        self.txtReprNumber = wx.TextCtrl(id=wxID_FRAME1TXTREPRNUMBER,
-              name=u'txtReprNumber', parent=self.panel1, pos=wx.Point(280, 56),
-              size=wx.Size(40, 21), style=0, value=u'')
+        self.txtReprRange = wx.TextCtrl(id=wxID_FRAME1TXTREPRRANGE,
+              name=u'txtReprRange', parent=self.panel1, pos=wx.Point(176, 48),
+              size=wx.Size(40, 24), style=0, value=u'')
 
-        self.txtHiddenNumber = wx.TextCtrl(id=wxID_FRAME1TXTHIDDENNUMBER,
-              name=u'txtHiddenNumber', parent=self.panel1, pos=wx.Point(280,
-              80), size=wx.Size(40, 21), style=0, value=u'')
+        self.txtHiddenRange = wx.TextCtrl(id=wxID_FRAME1TXTHIDDENRANGE,
+              name=u'txtHiddenRange', parent=self.panel1, pos=wx.Point(176, 88),
+              size=wx.Size(40, 24), style=0, value=u'')
 
         self.txtRandInitNumber = wx.TextCtrl(id=wxID_FRAME1TXTRANDINITNUMBER,
-              name=u'txtRandInitNumber', parent=self.panel1, pos=wx.Point(280,
-              104), size=wx.Size(40, 21), style=0, value=u'')
+              name=u'txtRandInitNumber', parent=self.panel1, pos=wx.Point(176,
+              128), size=wx.Size(40, 24), style=0, value=u'')
 
         self.stReprNumber = wx.StaticText(id=wxID_FRAME1STREPRNUMBER,
-              label=u'Maximum number of neurons in the representaiton layer',
-              name=u'stReprNumber', parent=self.panel1, pos=wx.Point(8, 56),
-              size=wx.Size(270, 13), style=0)
+              label=u'Range of numbers of neurons\n in the representaiton layer',
+              name=u'stReprNumber', parent=self.panel1, pos=wx.Point(16, 48),
+              size=wx.Size(144, 26), style=0)
 
         self.stHiddenNumber = wx.StaticText(id=wxID_FRAME1STHIDDENNUMBER,
-              label=u'Maximum number of neurons  in the hidden layer ',
-              name=u'stHiddenNumber', parent=self.panel1, pos=wx.Point(40, 80),
-              size=wx.Size(237, 13), style=0)
+              label=u'Range of numbers of neurons  \nin the hidden layer ',
+              name=u'stHiddenNumber', parent=self.panel1, pos=wx.Point(16, 88),
+              size=wx.Size(150, 26), style=0)
 
         self.stRandInitNumber = wx.StaticText(id=wxID_FRAME1STRANDINITNUMBER,
-              label=u'Number of random weights initializations',
-              name=u'stRandInitNumber', parent=self.panel1, pos=wx.Point(80,
-              104), size=wx.Size(193, 13), style=0)
-
-        self.stSAprogress = wx.StaticText(id=wxID_FRAME1STSAPROGRESS,
-              label=u'progress', name=u'stSAprogress', parent=self.panel1,
-              pos=wx.Point(168, 120), size=wx.Size(50, 16), style=0)
-        self.stSAprogress.SetFont(wx.Font(10, wx.SWISS, wx.NORMAL, wx.NORMAL,
-              False, u'MS Shell Dlg 2'))
+              label=u'Number of random \nweights initializations',
+              name=u'stRandInitNumber', parent=self.panel1, pos=wx.Point(56,
+              128), size=wx.Size(101, 26), style=0)
 
         self.ggSAprogress = wx.Gauge(id=wxID_FRAME1GGSAPROGRESS,
-              name=u'ggSAprogress', parent=self.panel1, pos=wx.Point(96, 136),
-              range=100, size=wx.Size(224, 16), style=wx.GA_HORIZONTAL)
-
-        self.btnSAsave = wx.Button(id=wxID_FRAME1BTNSASAVE, label=u'save',
-              name=u'btnSAsave', parent=self.panel1, pos=wx.Point(16, 168),
-              size=wx.Size(72, 40), style=0)
-        self.btnSAsave.Bind(wx.EVT_BUTTON, self.OnBtnSAsaveButton,
-              id=wxID_FRAME1BTNSASAVE)
-
-        self.btnSAload = wx.Button(id=wxID_FRAME1BTNSALOAD, label=u'load',
-              name=u'btnSAload', parent=self.panel1, pos=wx.Point(232, 168),
-              size=wx.Size(64, 23), style=0)
-        self.btnSAload.Bind(wx.EVT_BUTTON, self.OnBtnSAloadButton,
-              id=wxID_FRAME1BTNSALOAD)
-
-        self.btnSAVis = wx.Button(id=wxID_FRAME1BTNSAVIS, label=u'Visualize',
-              name=u'btnSAVis', parent=self.panel1, pos=wx.Point(240, 264),
-              size=wx.Size(75, 40), style=0)
-        self.btnSAVis.Bind(wx.EVT_BUTTON, self.OnBtnSAVisButton,
-              id=wxID_FRAME1BTNSAVIS)
-
-        self.rbSAVisParams = wx.RadioBox(choices=['train',
-              'train (overfitting)', 'test', 'test (overfitting)'],
-              id=wxID_FRAME1RBSAVISPARAMS, label=u'parameters',
-              majorDimension=2, name=u'rbSAVisParams', parent=self.panel1,
-              pos=wx.Point(8, 248), size=wx.Size(224, 64),
-              style=wx.RA_SPECIFY_COLS)
-
-        self.stVisualization = wx.StaticText(id=wxID_FRAME1STVISUALIZATION,
-              label=u'Visualization', name=u'stVisualization',
-              parent=self.panel1, pos=wx.Point(104, 224), size=wx.Size(112, 24),
-              style=0)
-        self.stVisualization.SetFont(wx.Font(15, wx.SWISS, wx.NORMAL, wx.NORMAL,
-              False, u'MS Shell Dlg 2'))
-
-        self.chCSV = wx.CheckBox(id=wxID_FRAME1CHCSV, label=u'csv',
-              name=u'chCSV', parent=self.panel1, pos=wx.Point(96, 192),
-              size=wx.Size(70, 16), style=0)
-        self.chCSV.SetValue(False)
-
-        self.txtFileName = wx.TextCtrl(id=wxID_FRAME1TXTFILENAME,
-              name=u'txtFileName', parent=self.panel1, pos=wx.Point(96, 168),
-              size=wx.Size(96, 16), style=0, value=u'')
+              name=u'ggSAprogress', parent=self.panel1, pos=wx.Point(8, 312),
+              range=100, size=wx.Size(216, 16), style=wx.GA_HORIZONTAL)
 
         self.panel3 = wx.Panel(id=wxID_FRAME1PANEL3, name='panel3', parent=self,
-              pos=wx.Point(424, 8), size=wx.Size(208, 120),
+              pos=wx.Point(304, 136), size=wx.Size(112, 320),
               style=wx.TAB_TRAVERSAL)
 
         self.stCheck = wx.StaticText(id=wxID_FRAME1STCHECK,
               label=u'Check result', name=u'stCheck', parent=self.panel3,
-              pos=wx.Point(48, 8), size=wx.Size(101, 19), style=0)
+              pos=wx.Point(8, 8), size=wx.Size(101, 19), style=0)
         self.stCheck.SetFont(wx.Font(12, wx.SWISS, wx.NORMAL, wx.BOLD, False,
               u'MS Shell Dlg 2'))
 
         self.btnCheck = wx.Button(id=wxID_FRAME1BTNCHECK, label=u'Check',
-              name=u'btnCheck', parent=self.panel3, pos=wx.Point(24, 80),
-              size=wx.Size(160, 23), style=0)
+              name=u'btnCheck', parent=self.panel3, pos=wx.Point(8, 136),
+              size=wx.Size(96, 23), style=0)
         self.btnCheck.Bind(wx.EVT_BUTTON, self.OnBtnCheckButton,
               id=wxID_FRAME1BTNCHECK)
 
@@ -343,7 +298,7 @@ class Frame1(wx.Frame):
               size=wx.Size(80, 21), style=0, value=u'0')
 
         self.txtIteration = wx.TextCtrl(id=wxID_FRAME1TXTITERATION,
-              name=u'txtIteration', parent=self.panel3, pos=wx.Point(112, 48),
+              name=u'txtIteration', parent=self.panel3, pos=wx.Point(16, 96),
               size=wx.Size(80, 21), style=0, value=u'')
 
         self.stExample = wx.StaticText(id=wxID_FRAME1STEXAMPLE,
@@ -352,7 +307,7 @@ class Frame1(wx.Frame):
 
         self.stIteration = wx.StaticText(id=wxID_FRAME1STITERATION,
               label=u'iteration', name=u'stIteration', parent=self.panel3,
-              pos=wx.Point(128, 32), size=wx.Size(41, 13), style=0)
+              pos=wx.Point(40, 80), size=wx.Size(41, 13), style=0)
 
         self.ggLprogess = wx.Gauge(id=wxID_FRAME1GGLPROGESS, name=u'ggLprogess',
               parent=self.panel2, pos=wx.Point(8, 64), range=100,
@@ -376,7 +331,61 @@ class Frame1(wx.Frame):
 
         self.chExactErrorEval = wx.CheckBox(id=wxID_FRAME1CHEXACTERROREVAL,
               label=u'', name=u'chExactErrorEval', parent=self.panelParameters,
-              pos=wx.Point(144, 368), size=wx.Size(70, 13), style=0)
+              pos=wx.Point(144, 368), size=wx.Size(16, 13), style=0)
+
+        self.stTrainEval = wx.StaticText(id=wxID_FRAME1STTRAINEVAL,
+              label=u'Additional train-only evaluation', name=u'stTrainEval',
+              parent=self.panel1, pos=wx.Point(16, 168), size=wx.Size(150, 13),
+              style=0)
+
+        self.chTrainEval = wx.CheckBox(id=wxID_FRAME1CHTRAINEVAL, label=u'',
+              name=u'chTrainEval', parent=self.panel1, pos=wx.Point(176, 168),
+              size=wx.Size(16, 13), style=0)
+        self.chTrainEval.SetValue(True)
+
+        self.txtPathFileDir = wx.TextCtrl(id=wxID_FRAME1TXTPATHFILEDIR,
+              name=u'txtPathFileDir', parent=self.panel1, pos=wx.Point(8, 208),
+              size=wx.Size(212, 21), style=0, value=u'')
+
+        self.stPathFileDir = wx.StaticText(id=wxID_FRAME1STPATHFILEDIR,
+              label=u'path to file or directory', name=u'stPathFileDir',
+              parent=self.panel1, pos=wx.Point(64, 192), size=wx.Size(120, 13),
+              style=0)
+
+        self.txtOutDir = wx.TextCtrl(id=wxID_FRAME1TXTOUTDIR, name=u'txtOutDir',
+              parent=self.panel1, pos=wx.Point(8, 248), size=wx.Size(216, 21),
+              style=0, value=u'')
+
+        self.stOutDir = wx.StaticText(id=wxID_FRAME1STOUTDIR,
+              label=u'output directory', name=u'stOutDir', parent=self.panel1,
+              pos=wx.Point(72, 232), size=wx.Size(79, 13), style=0)
+
+        self.txtRemainingTime = wx.TextCtrl(id=wxID_FRAME1TXTREMAININGTIME,
+              name=u'txtRemainingTime', parent=self.panel1, pos=wx.Point(8,
+              352), size=wx.Size(216, 16), style=0, value=u'')
+
+        self.stRemainingTime = wx.StaticText(id=wxID_FRAME1STREMAININGTIME,
+              label=u'remaining time', name=u'stRemainingTime',
+              parent=self.panel1, pos=wx.Point(80, 336), size=wx.Size(70, 13),
+              style=0)
+
+        self.btnSAVizualise = wx.Button(id=wxID_FRAME1BTNSAVIZUALISE,
+              label=u'Vizualise', name=u'btnSAVizualise', parent=self.panel1,
+              pos=wx.Point(16, 384), size=wx.Size(88, 40), style=0)
+        self.btnSAVizualise.Bind(wx.EVT_BUTTON, self.OnBtnSAVizualiseButton,
+              id=wxID_FRAME1BTNSAVIZUALISE)
+
+        self.btnSAAnalyse = wx.Button(id=wxID_FRAME1BTNSAANALYSE,
+              label=u'Analyse', name=u'btnSAAnalyse', parent=self.panel1,
+              pos=wx.Point(128, 384), size=wx.Size(83, 40), style=0)
+        self.btnSAAnalyse.Bind(wx.EVT_BUTTON, self.OnButton1Button,
+              id=wxID_FRAME1BUTTON1)
+
+        self.btnGMA = wx.Button(id=wxID_FRAME1BTNGMA, label=u'GMA',
+              name=u'btnGMA', parent=self.panel1, pos=wx.Point(120, 280),
+              size=wx.Size(91, 23), style=0)
+        self.btnGMA.Bind(wx.EVT_BUTTON, self.OnBtnGMAButton,
+              id=wxID_FRAME1BTNGMA)
 
     def __init__(self, parent):
         self._init_ctrls(parent)
@@ -390,19 +399,21 @@ class Frame1(wx.Frame):
                    S=3, R=0, M=0, number_of_epochs=50, number_of_batches=8,
                    data_proportion=0.25, online_learning='on',
                    data_representation='complex', cost_function='mean_squares',
-                   exact_error_eval=True, file_name=os.getcwd()+'\\01.csv')
+                   exact_error_eval=True, file_name=os.getcwd()+'\\01.csv',
+                   hidden_1_range=[3,10], hidden_2_range=[3,15], num_init=5,
+                   f=u'', out_dir=u'', train_eval=True)
         # set values in vidgets
         self.txtRepresentation.SetValue(unicode(cfg['hidden_1'])[1:-1])
         self.txtHidden.SetValue(unicode(cfg['hidden_2'])[1:-1])
         self.txtWeightsLimit.SetValue(unicode(cfg['epsilon']))
         self.txtLearningRate.SetValue(unicode(cfg['alpha']))
-        self.txtSigmoidSlope.SetValue(unicode(cfg['R']))
-        self.txtRegularization.SetValue(unicode(cfg['S']))
+        self.txtSigmoidSlope.SetValue(unicode(cfg['S']))
+        self.txtRegularization.SetValue(unicode(cfg['R']))
         self.txtMomentum.SetValue(unicode(cfg['M']))
+        if cfg['data_representation'] != 'large':
+            self.chDataRepresent.SetSelection(['complex','separate'].index(cfg['data_representation']))
+        self.stTestSetPercent.SetLabel(unicode(int(cfg['data_proportion']*100))+' %')
         self.sliderTestSetSize.SetValue(int(cfg['data_proportion']*100))
-        self.chDataRepresent.SetSelection(['complex','separate'].index(cfg['data_representation']))
-        self.sliderTestSetSize.SetValue(int(cfg['data_proportion']))
-        self.sliderTestSetSize.SetLabel(unicode(cfg['data_proportion']))
         self.txtNEpochs.SetValue(unicode(cfg['number_of_epochs']))
         if cfg['online_learning'] == 'on':
             self.chBatchSize.SetSelection(2)
@@ -415,6 +426,13 @@ class Frame1(wx.Frame):
         self.txtFilePath.SetValue(unicode(cfg['file_name']))
         self.chCostFunction.SetSelection(['mean_squares','cross_entropy'].index(cfg['cost_function']))
         self.chExactErrorEval.SetValue(cfg['exact_error_eval'])
+        self.txtReprRange.SetValue(unicode(cfg['hidden_1_range'])[1:-1])
+        self.txtHiddenRange.SetValue(unicode(cfg['hidden_2_range'])[1:-1])
+        self.txtRandInitNumber.SetValue(unicode(cfg['num_init']))
+        self.chTrainEval.SetValue(cfg['train_eval'])
+        self.txtPathFileDir.SetValue(unicode(cfg['f']))
+        self.txtOutDir.SetValue(unicode(cfg['out_dir']))
+
 
     def OnSliderTestSetSizeScroll(self, event):
         self.stTestSetPercent.SetLabel(str(self.sliderTestSetSize.GetValue())+'%')
@@ -478,13 +496,23 @@ class Frame1(wx.Frame):
         exact_error_eval = self.chExactErrorEval.GetValue()
         gauge = self.ggLprogess
         file_name = self.txtFilePath.GetValue() # Set file name
-        # Save current cfg
-        cfg = dict(hidden_1=hidden_1, hidden_2=hidden_2, epsilon=epsilon, alpha=alpha,
-                   S=S, R=R, M=M, number_of_epochs=number_of_epochs, number_of_batches=number_of_batches,
-                   data_proportion=data_proportion, online_learning=online_learning,
-                   data_representation=data_representation, cost_function=cost_function,
-                   exact_error_eval=exact_error_eval, file_name=file_name)
+        # SA parameters for saving
+        hidden_1_range = map(int, self.txtReprRange.GetValue().split(','))
+        hidden_2_range = map(int, self.txtHiddenRange.GetValue().split(','))
+        num_init = int(self.txtRandInitNumber.GetValue())     # number of random initializations
+        f = self.txtPathFileDir.GetValue()
+        out_dir = self.txtOutDir.GetValue()
+        train_eval = self.chTrainEval.GetValue()
 
+        # Save current cfg
+        cfg = dict(hidden_1=hidden_1, hidden_2=hidden_2, epsilon=epsilon,
+                   alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
+                   number_of_batches=number_of_batches, data_proportion=data_proportion,
+                   online_learning=online_learning, data_representation=data_representation,
+                   cost_function=cost_function,exact_error_eval=exact_error_eval,
+                   file_name=file_name, hidden_1_range=hidden_1_range,
+                   hidden_2_range=hidden_2_range, num_init=num_init, f=f,
+                   out_dir=out_dir, train_eval=train_eval)
         NN_learning.save_cfg(cfg, os.getcwd()+'\last', txt=False)
 
         # Perform learning
@@ -525,7 +553,11 @@ class Frame1(wx.Frame):
 
 
     def OnBtnStructAnalysisButton(self, event):
-        # Take parameters
+        # Take parameters:
+        # Set net structure for saving
+        hidden_1 = map(int, self.txtRepresentation.GetValue().split(','))
+        hidden_2 = map(int, self.txtHidden.GetValue().split(','))
+        # Set learning parameters
         epsilon = float(self.txtWeightsLimit.GetValue())
         alpha = float(self.txtLearningRate.GetValue())
         S = float(self.txtSigmoidSlope.GetValue())
@@ -553,62 +585,38 @@ class Frame1(wx.Frame):
             cost_function = 'mean_squares'
         elif self.chCostFunction.GetSelection() == 1:
             cost_function = 'cross_entropy'
-        # Set file name
-        file_name = self.txtFilePath.GetValue()
+        exact_error_eval = self.chExactErrorEval.GetValue()
+        file_name = self.txtFilePath.GetValue() # Set file name for saving
         # Set SA parameters
-        hidden_1_max = int(self.txtReprNumber.GetValue())
-        hidden_2_max = int(self.txtHiddenNumber.GetValue())
+        hidden_1_range = map(int, self.txtReprRange.GetValue().split(','))
+        hidden_2_range = map(int, self.txtHiddenRange.GetValue().split(','))
         num_init = int(self.txtRandInitNumber.GetValue())     # number of random initializations
-        self.ggSAprogress.SetRange(hidden_1_max * hidden_2_max)    # det gauge range
-        # Prepare date from given file
-        [batch_size, number_of_batches,
-        train_set, test_set] = NN_learning.Prepare_Learning(number_of_epochs, number_of_batches,
-                                                            data_proportion, online_learning,
-                                                            data_representation, file_name)
-        # Prepare arrays to fill with error values
-        SA_train = np.zeros((hidden_1_max, hidden_2_max))
-        SA_train_of = np.zeros((hidden_1_max, hidden_2_max))
-        SA_test = np.zeros((hidden_1_max, hidden_2_max))
-        SA_test_of = np.zeros((hidden_1_max, hidden_2_max))
+        f = self.txtPathFileDir.GetValue()
+        out_dir = self.txtOutDir.GetValue()
+        train_eval = self.chTrainEval.GetValue()
+        # Save current cfg
+        cfg = dict(hidden_1=hidden_1, hidden_2=hidden_2, epsilon=epsilon,
+                   alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
+                   number_of_batches=number_of_batches, data_proportion=data_proportion,
+                   online_learning=online_learning, data_representation=data_representation,
+                   cost_function=cost_function,exact_error_eval=exact_error_eval,
+                   file_name=file_name, hidden_1_range=hidden_1_range,
+                   hidden_2_range=hidden_2_range, num_init=num_init, f=f,
+                   out_dir=out_dir, train_eval=train_eval)
+        NN_learning.save_cfg(cfg, os.getcwd()+'\last', txt=False)
 
-        for i in range(hidden_2_max):      # Loop over the hidden layer
-            hidden_2 = [i+1]                 # Set number of neurons in the second layer(hidden)
+##        timing = self.txtRemainingTime
+        NN_analysis.full_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
+                            number_of_epochs, number_of_batches, data_proportion,
+                            online_learning, data_representation, cost_function,
+                            exact_error_eval, f, out_dir, train_eval)
 
-            for j in range(hidden_1_max):  # Loop over  the representaton layer
-                hidden_1 = [j+1]             # Set number of neurons in the first layer(representation)
-                # Compute errors over several random initializations
-                [train_init,
-                 train_init_of,
-                 test_init,
-                 test_init_of] = Rand_Inits(num_init, alpha, R, S, M, hidden_1, hidden_2,
-                                            epsilon, data_representation, data_proportion,
-                                            cost_function, number_of_epochs, number_of_batches,
-                                            exact_error_eval, batch_size, train_set, test_set)
-                 # take average error value
-                SA_train[j, i] = np.average(train_init)
-                SA_train_of[j, i] = np.average(train_init_of)
-                SA_test[j, i] = np.average(test_init)
-                SA_test_of[j, i] = np.average(test_init_of)
-                # Show progress
-                progress = ((hidden_2[0]-1)*hidden_1_max) + hidden_1[0]
-                self.ggSAprogress.SetValue(progress)
-                # save output variables for transmitting
-                self.btnStructAnalysis.J_SA = [SA_train, SA_train_of, SA_test, SA_test_of]
-                self.btnStructAnalysis.cfg = dict(epsilon=epsilon, alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
-                                                  number_of_batches=number_of_batches, data_proportion=data_proportion, cost_function=cost_function,
-                                                  online_learning=online_learning, file=file,    hidden_1_max=hidden_1_max,
-                                                  hidden_2_max=hidden_2_max, num_init=num_init)
+##        self.ggSAprogress.SetRange(len(range(hidden_1_range)) * len(range(hidden_1_range)))    # set gauge range
+##                # Show progress
+##                progress = ((hidden_2[0]-1)*hidden_1_max) + hidden_1[0]
+##                self.ggSAprogress.SetValue(progress)
         event.Skip()
 
-
-    def OnBtnSAsaveButton(self, event):
-        [SA_train, SA_train_of, SA_test, SA_test_of] = self.btnStructAnalysis.J_SA
-        csv_opt = self.chCSV.GetValue()
-        file_name = self.txtFileName.GetValue()
-        cfg = self.btnStructAnalysis.cfg
-        NN_learning.save_SA_results(SA_train, SA_train_of, SA_test, SA_test_of,
-                                    cfg, file_name, csv_opt)
-        event.Skip()
 
     def OnBtnSAloadButton(self, event):
         dlg = wx.FileDialog(self, message="Choose a file",
@@ -626,20 +634,6 @@ class Frame1(wx.Frame):
         dlg.Destroy()
         event.Skip()
 
-    def OnBtnSAVisButton(self, event):
-        # Choose matrix to visualize
-        if self.rbSAVisParams.GetSelection() == 0:
-            J_SA = self.btnStructAnalysis.J_SA[0]
-        elif self.rbSAVisParams.GetSelection() == 1:
-            J_SA = self.btnStructAnalysis.J_SA[1]
-        elif self.rbSAVisParams.GetSelection() == 2:
-            J_SA = self.btnStructAnalysis.J_SA[2]
-        elif self.rbSAVisParams.GetSelection() == 3:
-            J_SA = self.btnStructAnalysis.J_SA[3]
-        # Visualization
-        NN_learning.disp_struct_analysis(J_SA)
-        event.Skip()
-
 
     def OnBtnCheckButton(self, event):
         example = int(self.txtExample.GetValue())
@@ -655,6 +649,92 @@ class Frame1(wx.Frame):
         dlg = wx.MessageDialog(None, check_results, caption, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
+        event.Skip()
+
+
+    def OnBtnSAVizualiseButton(self, event):
+        # Get file through dialog
+        dlg = wx.FileDialog(self, message="Choose a file",
+                            defaultDir=os.getcwd(),
+                            defaultFile="",
+                            style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR)
+        if dlg.ShowModal() == wx.ID_OK:
+            path = dlg.GetPath()
+            loaded_SA = open(path, 'r')
+            J_SA = pickle.load(loaded_SA)
+            loaded_SA.close()
+        dlg.Destroy()
+        # Visualization
+        NN_learning.disp_struct_analysis(J_SA)
+        event.Skip()
+
+
+    def OnButton1Button(self, event):
+        dir = self.txtOutDir.GetValue()
+        if 'SA' in os.listdir(dir)[0]:
+            NN_analysis.fill_table_SA(dir)
+        event.Skip()
+
+    def OnBtnGMAButton(self, event):
+        # Take parameters:
+        # Set net structure for saving
+        hidden_1 = map(int, self.txtRepresentation.GetValue().split(','))
+        hidden_2 = map(int, self.txtHidden.GetValue().split(','))
+        # Set learning parameters
+        epsilon = float(self.txtWeightsLimit.GetValue())
+        alpha = float(self.txtLearningRate.GetValue())
+        S = float(self.txtSigmoidSlope.GetValue())
+        R = float(self.txtRegularization.GetValue())
+        M = float(self.txtMomentum.GetValue())
+        # Set data preperation parameters
+        data_proportion = float(self.sliderTestSetSize.GetValue()) / 100
+        data_representation = 'large'
+        number_of_epochs = int(self.txtNEpochs.GetValue())
+        if self.chBatchSize.GetSelection() == 0:
+            number_of_batches = 1
+            online_learning = ''
+            self.txtNumberOfBatches.SetValue('1')
+        elif self.chBatchSize.GetSelection() == 1:
+            number_of_batches = int(self.txtNumberOfBatches.GetValue())
+            online_learning = ''
+        elif self.chBatchSize.GetSelection() == 2:
+            online_learning = 'on'
+            self.txtNumberOfBatches.SetValue('number of examples')
+            number_of_batches = 'none'
+        if self.chCostFunction.GetSelection() == 0:
+            cost_function = 'mean_squares'
+        elif self.chCostFunction.GetSelection() == 1:
+            cost_function = 'cross_entropy'
+        exact_error_eval = self.chExactErrorEval.GetValue()
+        file_name = self.txtFilePath.GetValue() # Set file name for saving
+        # Set SA parameters
+        hidden_1_range = map(int, self.txtReprRange.GetValue().split(','))
+        hidden_2_range = map(int, self.txtHiddenRange.GetValue().split(','))
+        num_init = int(self.txtRandInitNumber.GetValue())     # number of random initializations
+        f = self.txtPathFileDir.GetValue()
+        out_dir = self.txtOutDir.GetValue()
+        train_eval = self.chTrainEval.GetValue()
+        # Save current cfg
+        cfg = dict(hidden_1=hidden_1, hidden_2=hidden_2, epsilon=epsilon,
+                   alpha=alpha, S=S, R=R, M=M, number_of_epochs=number_of_epochs,
+                   number_of_batches=number_of_batches, data_proportion=data_proportion,
+                   online_learning=online_learning, data_representation=data_representation,
+                   cost_function=cost_function,exact_error_eval=exact_error_eval,
+                   file_name=file_name, hidden_1_range=hidden_1_range,
+                   hidden_2_range=hidden_2_range, num_init=num_init, f=f,
+                   out_dir=out_dir, train_eval=train_eval)
+        NN_learning.save_cfg(cfg, os.getcwd()+'\last', txt=False)
+        # Perform GMA
+        theta_list = NN_analysis.GMA(epsilon, alpha, S, R, M, number_of_epochs,
+                                                 number_of_batches, data_proportion,
+                                                 online_learning, data_representation,
+                                                 cost_function, exact_error_eval,
+                                                 hidden_1_range, hidden_2_range, num_init,
+                                                 f, out_dir)
+        # fill the table
+        NN_analysis.fill_table_GMA(theta_list, file_name, S, hidden_1, hidden_2,
+                                   out_dir, f)
+
         event.Skip()
 
 
