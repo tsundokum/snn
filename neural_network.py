@@ -310,8 +310,11 @@ def big_data_preparation(file_dir):
     full_item = []
     full_rel = []
     full_attr = []
-    for file in os.listdir(file_dir):
-        [item, rel, attr] = complex_data_preparation(file_dir+'/'+file)
+    for f in os.listdir(file_dir):
+        if f[-3:] == 'csv':
+            [item, rel, attr] = complex_data_preparation(file_dir+'\\'+f)
+        elif f[-3:] == 'xls':
+            [item, rel, attr] = data_preparation_xls(file_dir+'\\'+f, 'complex')
         full_item.append(item)
         full_rel.append(rel)
         full_attr.append(attr)
