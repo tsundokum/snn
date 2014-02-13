@@ -16,6 +16,7 @@ import wx.lib.buttons
 import numpy as np
 import pickle
 import csv
+import thread
 import matplotlib.pyplot as pp
 import matplotlib as mpl
 from matplotlib import cm
@@ -31,33 +32,32 @@ def create(parent):
     return Frame1(parent)
 
 [wxID_FRAME1, wxID_FRAME1BTNCHECK, wxID_FRAME1BTNFILE, wxID_FRAME1BTNGMA,
- wxID_FRAME1BTNLEARN, wxID_FRAME1BTNSAANALYSE, wxID_FRAME1BTNSAVIZUALISE,
- wxID_FRAME1BTNSTRUCTANALYSIS, wxID_FRAME1BTNVISUALIZE, wxID_FRAME1BUTTON1,
- wxID_FRAME1CHBATCHSIZE, wxID_FRAME1CHCOSTFUNCTION,
+ wxID_FRAME1BTNLEARN, wxID_FRAME1BTNSAANALYSE, wxID_FRAME1BUTTON1,
+ wxID_FRAME1BTNSAVIZUALISE, wxID_FRAME1BTNSTRUCTANALYSIS,
+ wxID_FRAME1BTNVISUALIZE, wxID_FRAME1CHBATCHSIZE, wxID_FRAME1CHCOSTFUNCTION,
  wxID_FRAME1CHDATAREPRESENT, wxID_FRAME1CHEXACTERROREVAL,
- wxID_FRAME1CHTRAINEVAL, wxID_FRAME1GGLPROGESS, wxID_FRAME1GGSAPROGRESS,
- wxID_FRAME1PANEL1, wxID_FRAME1PANEL2, wxID_FRAME1PANEL3,
- wxID_FRAME1PANELPARAMETERS, wxID_FRAME1SLIDERTESTSETSIZE,
- wxID_FRAME1STBATCHSIZE, wxID_FRAME1STCHECK, wxID_FRAME1STCOSTFUNCTION,
- wxID_FRAME1STDATAREPRESENT, wxID_FRAME1STEXACTERROREVAL,
- wxID_FRAME1STEXAMPLE, wxID_FRAME1STHIDDEN, wxID_FRAME1STHIDDENNUMBER,
- wxID_FRAME1STITERATION, wxID_FRAME1STLEARNING, wxID_FRAME1STLERNINGRATE,
- wxID_FRAME1STMOMENTUM, wxID_FRAME1STNEPOCHS, wxID_FRAME1STNUMBEROFBATCHES,
- wxID_FRAME1STOUTDIR, wxID_FRAME1STPARAMETERS, wxID_FRAME1STPATHFILEDIR,
- wxID_FRAME1STRANDINITNUMBER, wxID_FRAME1STREGULARIZATION,
- wxID_FRAME1STREMAININGTIME, wxID_FRAME1STREPRESENTATION,
- wxID_FRAME1STREPRNUMBER, wxID_FRAME1STSIGSLOPE,
+ wxID_FRAME1CHTRAINEVAL, wxID_FRAME1GGLPROGESS, wxID_FRAME1PANEL1,
+ wxID_FRAME1PANEL2, wxID_FRAME1PANEL3, wxID_FRAME1PANELPARAMETERS,
+ wxID_FRAME1SLIDERTESTSETSIZE, wxID_FRAME1STBATCHSIZE, wxID_FRAME1STCHECK,
+ wxID_FRAME1STCOSTFUNCTION, wxID_FRAME1STDATAREPRESENT,
+ wxID_FRAME1STEXACTERROREVAL, wxID_FRAME1STEXAMPLE, wxID_FRAME1STHIDDEN,
+ wxID_FRAME1STHIDDENNUMBER, wxID_FRAME1STITERATION, wxID_FRAME1STLEARNING,
+ wxID_FRAME1STLERNINGRATE, wxID_FRAME1STMOMENTUM, wxID_FRAME1STNEPOCHS,
+ wxID_FRAME1STNUMBEROFBATCHES, wxID_FRAME1STOUTDIR, wxID_FRAME1STPARAMETERS,
+ wxID_FRAME1STPATHFILEDIR, wxID_FRAME1STRANDINITNUMBER,
+ wxID_FRAME1STREGULARIZATION, wxID_FRAME1STREMAININGTIME,
+ wxID_FRAME1STREPRESENTATION, wxID_FRAME1STREPRNUMBER, wxID_FRAME1STSIGSLOPE,
  wxID_FRAME1STSTRUCTUREANALYSIS, wxID_FRAME1STTESTSETPERCENT,
  wxID_FRAME1STTESTSETSIZE, wxID_FRAME1STTRAINEVAL, wxID_FRAME1STWEIGHTSLIMIT,
- wxID_FRAME1TXTEXAMPLE, wxID_FRAME1TXTFILEPATH, wxID_FRAME1TXTHIDDEN,
- wxID_FRAME1TXTHIDDENRANGE, wxID_FRAME1TXTITERATION,
+ wxID_FRAME1TEXTCTRL1, wxID_FRAME1TXTEXAMPLE, wxID_FRAME1TXTFILEPATH,
+ wxID_FRAME1TXTHIDDEN, wxID_FRAME1TXTHIDDENRANGE, wxID_FRAME1TXTITERATION,
  wxID_FRAME1TXTLEARNINGRATE, wxID_FRAME1TXTMOMENTUM, wxID_FRAME1TXTNEPOCHS,
  wxID_FRAME1TXTNUMBEROFBATCHES, wxID_FRAME1TXTOUTDIR,
  wxID_FRAME1TXTPATHFILEDIR, wxID_FRAME1TXTRANDINITNUMBER,
  wxID_FRAME1TXTREGULARIZATION, wxID_FRAME1TXTREMAININGTIME,
  wxID_FRAME1TXTREPRESENTATION, wxID_FRAME1TXTREPRRANGE,
- wxID_FRAME1TXTSIGMOIDSLOPE, wxID_FRAME1TXTWEIGHTSLIMIT,
-] = [wx.NewId() for _init_ctrls in range(68)]
+ wxID_FRAME1TXTSIGMOIDSLOPE, wxID_FRAME1TXTWEIGHTSLIMIT, wxID_FRAME1TXTCURFILE
+] = [wx.NewId() for _init_ctrls in range(69)]
 
 class Frame1(wx.Frame):
     def _init_ctrls(self, prnt):
@@ -273,10 +273,6 @@ class Frame1(wx.Frame):
               name=u'stRandInitNumber', parent=self.panel1, pos=wx.Point(56,
               128), size=wx.Size(101, 26), style=0)
 
-        self.ggSAprogress = wx.Gauge(id=wxID_FRAME1GGSAPROGRESS,
-              name=u'ggSAprogress', parent=self.panel1, pos=wx.Point(8, 312),
-              range=100, size=wx.Size(216, 16), style=wx.GA_HORIZONTAL)
-
         self.panel3 = wx.Panel(id=wxID_FRAME1PANEL3, name='panel3', parent=self,
               pos=wx.Point(304, 136), size=wx.Size(112, 320),
               style=wx.TAB_TRAVERSAL)
@@ -362,12 +358,11 @@ class Frame1(wx.Frame):
 
         self.txtRemainingTime = wx.TextCtrl(id=wxID_FRAME1TXTREMAININGTIME,
               name=u'txtRemainingTime', parent=self.panel1, pos=wx.Point(8,
-              352), size=wx.Size(216, 16), style=0, value=u'')
+              352), size=wx.Size(216, 19), style=0, value=u'')
 
         self.stRemainingTime = wx.StaticText(id=wxID_FRAME1STREMAININGTIME,
-              label=u'remaining time', name=u'stRemainingTime',
-              parent=self.panel1, pos=wx.Point(80, 336), size=wx.Size(70, 13),
-              style=0)
+              label=u'progress', name=u'stRemainingTime', parent=self.panel1,
+              pos=wx.Point(88, 312), size=wx.Size(48, 13), style=0)
 
         self.btnSAVizualise = wx.Button(id=wxID_FRAME1BTNSAVIZUALISE,
               label=u'Vizualise', name=u'btnSAVizualise', parent=self.panel1,
@@ -386,6 +381,10 @@ class Frame1(wx.Frame):
               size=wx.Size(91, 23), style=0)
         self.btnGMA.Bind(wx.EVT_BUTTON, self.OnBtnGMAButton,
               id=wxID_FRAME1BTNGMA)
+
+        self.txtCurFile = wx.TextCtrl(id=wxID_FRAME1TXTCURFILE,
+              name=u'txtCurFile', parent=self.panel1, pos=wx.Point(8, 328),
+              size=wx.Size(216, 19), style=0, value=u'')
 
     def __init__(self, parent):
         self._init_ctrls(parent)
@@ -605,16 +604,12 @@ class Frame1(wx.Frame):
                    out_dir=out_dir, train_eval=train_eval)
         NN_learning.save_cfg(cfg, os.getcwd()+'\last', txt=False)
 
-##        timing = self.txtRemainingTime
-        NN_analysis.full_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
-                            number_of_epochs, number_of_batches, data_proportion,
-                            online_learning, data_representation, cost_function,
-                            exact_error_eval, f, out_dir, train_eval)
-
-##        self.ggSAprogress.SetRange(len(range(hidden_1_range)) * len(range(hidden_1_range)))    # set gauge range
-##                # Show progress
-##                progress = ((hidden_2[0]-1)*hidden_1_max) + hidden_1[0]
-##                self.ggSAprogress.SetValue(progress)
+        thread.start_new_thread(NN_analysis.full_SA,
+                                (hidden_1_range, hidden_2_range, num_init, epsilon,
+                                 alpha, S, R, M, number_of_epochs, number_of_batches,
+                                 data_proportion, online_learning, data_representation,
+                                 cost_function, exact_error_eval, f, out_dir, train_eval,
+                                 self))
         event.Skip()
 
 
@@ -734,7 +729,6 @@ class Frame1(wx.Frame):
         # fill the table
         NN_analysis.fill_table_GMA(theta_list, file_name, S, hidden_1, hidden_2,
                                    out_dir, f)
-
         event.Skip()
 
 

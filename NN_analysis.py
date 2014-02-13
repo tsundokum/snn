@@ -43,7 +43,7 @@ def save_SA(file_name, test, best_iter, SA, average_theta):
 
 def StrAn(alpha, R, S, M, epsilon, batch_size, number_of_epochs, number_of_batches,
        data_representation, data_proportion, cost_function, exact_error_eval,
-       train_set, test_set, hidden_1_range, hidden_2_range, num_init):
+       train_set, test_set, hidden_1_range, hidden_2_range, num_init, self):
     """
     Computes efficiency of network with respect to number of neurons in every layer
     (Only for one-layer subnetworks).
@@ -126,28 +126,27 @@ def StrAn(alpha, R, S, M, epsilon, batch_size, number_of_epochs, number_of_batch
             else:
                 average_iter = number_of_epochs * number_of_batches
 
-##            # Time
-##            full_time = time_per_loop * (hidden_1_max * hidden_2_max)
-##            performance_time += time_per_loop
-##            remaining_time = full_time - performance_time
-##            hours = int(remaining_time / 3600)
-##            minutes = int((remaining_time - (hours * 3600)) / 60)
-##            seconds = remaining_time - (hours*3600) - (minutes*60)
-##            if timing != 0:
-##                timing.SetValue(str(hours)+' h, '+str(minutes)+' min, '+
-##                                str(round(seconds, 2))+' sec')
-##            print 'approximate ramaining time :'+str(hours)+' hours  '+ \
-##                   str(minutes)+' minutes  '+str(seconds)+' seconds'
-##            # Show progress
-##            print 'hidden 1: '+str(hidden_1[0])+'/'+str(hidden_1_range[1])+'   '+  \
-##                  'hidden 2: '+str(hidden_2[0])+'/'+str(hidden_2_range[1])
+            # Time
+            full_time = time_per_loop * (hidden_1_max * hidden_2_max)
+            performance_time += time_per_loop
+            remaining_time = full_time - performance_time
+            hours = int(remaining_time / 3600)
+            minutes = int((remaining_time - (hours * 3600)) / 60)
+            seconds = remaining_time - (hours*3600) - (minutes*60)
+            # Show progress
+            if self:
+                self.txtRemainingTime.SetValue('R: '+str(hidden_1[0])+'/'+str(hidden_1_range[1])+', '+
+                                               'H: '+str(hidden_2[0])+'/'+str(hidden_2_range[1])+'; '+
+                                               str(hours)+' h, '+
+                                               str(minutes)+' min, '+
+                                               str(round(seconds, 2))+' sec')
 
     return SA, average_iter, average_theta
 
 
 def prep_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
             number_of_epochs, number_of_batches, data_proportion, online_learning,
-            data_representation, cost_function, exact_error_eval, file_name):
+            data_representation, cost_function, exact_error_eval, file_name, self):
     """
     Struct analysis inncluding data preparation.
     """
@@ -165,7 +164,7 @@ def prep_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
                                      data_representation, data_proportion,
                                      cost_function, exact_error_eval,
                                      train_set, test_set, hidden_1_range,
-                                     hidden_2_range, num_init)
+                                     hidden_2_range, num_init, self)
 
     return SA, best_iter, average_theta
 
@@ -173,7 +172,7 @@ def prep_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
 def full_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
             number_of_epochs, number_of_batches, data_proportion,
             online_learning, data_representation, cost_function,
-            exact_error_eval, file_dir, out_dir, train_eval):
+            exact_error_eval, file_dir, out_dir, train_eval, self):
     """
     Full function for the structure analysis. Can analyse all files in given
     directiory. Both with test and train-only modes.
@@ -186,26 +185,28 @@ def full_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
         out_file = out_dir+f[f.rfind('\\'):][:-4]
         if train_eval == True:  # in case of additional train-only evaluation
             for d in [0, data_proportion]:  # preform SA without test and with test il loop
-                data_pr = d
+                data_proportion = d
+                if self:
+                    self.txtCurFile.SetValue(f[f.rfind('\\'):]+'  - test= '+str(data_proportion))
                 [SA, best_iter,
                  average_theta] = prep_SA(hidden_1_range, hidden_2_range,
-                                          num_init,
-                                          epsilon, alpha, S, R, M,
+                                          num_init, epsilon, alpha, S, R, M,
                                           number_of_epochs, number_of_batches,
-                                          data_pr, online_learning,
+                                          data_proportion, online_learning,
                                           data_representation, cost_function,
-                                          exact_error_eval, f)
+                                          exact_error_eval, f, self)
                 # save results
-                save_SA(out_file, 'test='+str(data_pr), best_iter, SA, average_theta)
+                save_SA(out_file, 'test='+str(data_proportion), best_iter, SA, average_theta)
         else:
+            if self:
+                self.txtCurFile.SetValue(f[f.rfind('\\'):]+'  - test= '+str(data_proportion))
             [SA, best_iter,
              average_theta] = prep_SA(hidden_1_range, hidden_2_range,
-                                      num_init,
-                                      epsilon, alpha, S, R, M,
+                                      num_init, epsilon, alpha, S, R, M,
                                       number_of_epochs, number_of_batches,
                                       data_proportion, online_learning,
                                       data_representation, cost_function,
-                                      exact_error_eval, f)
+                                      exact_error_eval, f, self)
             # save results
             save_SA(out_file, 'test='+str(data_proportion), best_iter, SA, average_theta)
     # if given directory
@@ -214,26 +215,29 @@ def full_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
             out_file = out_dir+'\\'+f[:-4]
             if train_eval == True:
                 for d in [0, data_proportion]:  # preform SA without test and with test il loop
-                    data_pr = d
+                    data_proportion = d
+                    if self:
+                        self.txtCurFile.SetValue(f+'  - test= '+str(data_proportion))
                     [SA, best_iter,
                      average_theta] = prep_SA(hidden_1_range, hidden_2_range,
-                                              num_init,
-                                              epsilon, alpha, S, R, M,
+                                              num_init, epsilon, alpha, S, R, M,
                                               number_of_epochs, number_of_batches,
-                                              data_pr, online_learning,
+                                              data_proportion, online_learning,
                                               data_representation, cost_function,
-                                              exact_error_eval, file_dir+'\\'+f)
+                                              exact_error_eval, file_dir+'\\'+f,
+                                              self)
                     # save results
-                    save_SA(out_file, 'test='+str(data_pr), best_iter, SA, average_theta)
+                    save_SA(out_file, 'test='+str(data_proportion), best_iter, SA, average_theta)
             else:
+                if self:
+                    self.txtCurFile.SetValue(f+'  - test= '+str(data_proportion))
                 [SA, best_iter,
                  average_theta] = prep_SA(hidden_1_range, hidden_2_range,
-                                          num_init,
-                                          epsilon, alpha, S, R, M,
+                                          num_init, epsilon, alpha, S, R, M,
                                           number_of_epochs, number_of_batches,
                                           data_proportion, online_learning,
                                           data_representation, cost_function,
-                                          exact_error_eval, file_dir+'\\'+f)
+                                          exact_error_eval, file_dir+'\\'+f, self)
                 # save results
                 save_SA(out_file, 'test='+str(data_proportion), best_iter, SA, average_theta)
 
