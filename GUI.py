@@ -11,6 +11,7 @@
 #-----------------------------------------------------------------------------
 #Boa:Frame:Frame1
 import os
+import sys
 import wx
 import wx.lib.buttons
 import numpy as np
@@ -32,9 +33,9 @@ def create(parent):
     return Frame1(parent)
 
 [wxID_FRAME1, wxID_FRAME1BTNCHECK, wxID_FRAME1BTNFILE, wxID_FRAME1BTNGMA,
- wxID_FRAME1BTNLEARN, wxID_FRAME1BTNSAANALYSE, wxID_FRAME1BUTTON1,
- wxID_FRAME1BTNSAVIZUALISE, wxID_FRAME1BTNSTRUCTANALYSIS,
- wxID_FRAME1BTNVISUALIZE, wxID_FRAME1CHBATCHSIZE, wxID_FRAME1CHCOSTFUNCTION,
+ wxID_FRAME1BTNLEARN, wxID_FRAME1BTNSAANALYSE, wxID_FRAME1BTNSAVIZUALISE,
+ wxID_FRAME1BTNSTRUCTANALYSIS, wxID_FRAME1BTNVISUALIZE,
+ wxID_FRAME1CHBATCHSIZE, wxID_FRAME1CHCOSTFUNCTION,
  wxID_FRAME1CHDATAREPRESENT, wxID_FRAME1CHEXACTERROREVAL,
  wxID_FRAME1CHTRAINEVAL, wxID_FRAME1GGLPROGESS, wxID_FRAME1PANEL1,
  wxID_FRAME1PANEL2, wxID_FRAME1PANEL3, wxID_FRAME1PANELPARAMETERS,
@@ -49,27 +50,27 @@ def create(parent):
  wxID_FRAME1STREPRESENTATION, wxID_FRAME1STREPRNUMBER, wxID_FRAME1STSIGSLOPE,
  wxID_FRAME1STSTRUCTUREANALYSIS, wxID_FRAME1STTESTSETPERCENT,
  wxID_FRAME1STTESTSETSIZE, wxID_FRAME1STTRAINEVAL, wxID_FRAME1STWEIGHTSLIMIT,
- wxID_FRAME1TEXTCTRL1, wxID_FRAME1TXTEXAMPLE, wxID_FRAME1TXTFILEPATH,
+ wxID_FRAME1TXTCURFILE, wxID_FRAME1TXTEXAMPLE, wxID_FRAME1TXTFILEPATH,
  wxID_FRAME1TXTHIDDEN, wxID_FRAME1TXTHIDDENRANGE, wxID_FRAME1TXTITERATION,
  wxID_FRAME1TXTLEARNINGRATE, wxID_FRAME1TXTMOMENTUM, wxID_FRAME1TXTNEPOCHS,
  wxID_FRAME1TXTNUMBEROFBATCHES, wxID_FRAME1TXTOUTDIR,
  wxID_FRAME1TXTPATHFILEDIR, wxID_FRAME1TXTRANDINITNUMBER,
  wxID_FRAME1TXTREGULARIZATION, wxID_FRAME1TXTREMAININGTIME,
  wxID_FRAME1TXTREPRESENTATION, wxID_FRAME1TXTREPRRANGE,
- wxID_FRAME1TXTSIGMOIDSLOPE, wxID_FRAME1TXTWEIGHTSLIMIT, wxID_FRAME1TXTCURFILE
-] = [wx.NewId() for _init_ctrls in range(69)]
+ wxID_FRAME1TXTSIGMOIDSLOPE, wxID_FRAME1TXTWEIGHTSLIMIT,
+] = [wx.NewId() for _init_ctrls in range(67)]
 
 class Frame1(wx.Frame):
     def _init_ctrls(self, prnt):
         # generated method, don't edit
         wx.Frame.__init__(self, id=wxID_FRAME1, name='', parent=prnt,
-              pos=wx.Point(18, 76), size=wx.Size(672, 491),
+              pos=wx.Point(18, 76), size=wx.Size(672, 476),
               style=wx.DEFAULT_FRAME_STYLE, title='SNN')
-        self.SetClientSize(wx.Size(664, 464))
+        self.SetClientSize(wx.Size(664, 449))
 
         self.panelParameters = wx.Panel(id=wxID_FRAME1PANELPARAMETERS,
               name=u'panelParameters', parent=self, pos=wx.Point(8, 8),
-              size=wx.Size(288, 448), style=wx.TAB_TRAVERSAL)
+              size=wx.Size(288, 432), style=wx.TAB_TRAVERSAL)
 
         self.panel2 = wx.Panel(id=wxID_FRAME1PANEL2, name='panel2', parent=self,
               pos=wx.Point(304, 8), size=wx.Size(112, 120),
@@ -224,7 +225,7 @@ class Frame1(wx.Frame):
               id=wxID_FRAME1BTNLEARN)
 
         self.panel1 = wx.Panel(id=wxID_FRAME1PANEL1, name='panel1', parent=self,
-              pos=wx.Point(424, 8), size=wx.Size(232, 448),
+              pos=wx.Point(424, 8), size=wx.Size(232, 432),
               style=wx.TAB_TRAVERSAL)
 
         self.btnVisualize = wx.Button(id=wxID_FRAME1BTNVISUALIZE,
@@ -274,7 +275,7 @@ class Frame1(wx.Frame):
               128), size=wx.Size(101, 26), style=0)
 
         self.panel3 = wx.Panel(id=wxID_FRAME1PANEL3, name='panel3', parent=self,
-              pos=wx.Point(304, 136), size=wx.Size(112, 320),
+              pos=wx.Point(304, 136), size=wx.Size(112, 304),
               style=wx.TAB_TRAVERSAL)
 
         self.stCheck = wx.StaticText(id=wxID_FRAME1STCHECK,
@@ -366,15 +367,15 @@ class Frame1(wx.Frame):
 
         self.btnSAVizualise = wx.Button(id=wxID_FRAME1BTNSAVIZUALISE,
               label=u'Vizualise', name=u'btnSAVizualise', parent=self.panel1,
-              pos=wx.Point(16, 384), size=wx.Size(88, 40), style=0)
+              pos=wx.Point(128, 384), size=wx.Size(88, 32), style=0)
         self.btnSAVizualise.Bind(wx.EVT_BUTTON, self.OnBtnSAVizualiseButton,
               id=wxID_FRAME1BTNSAVIZUALISE)
 
         self.btnSAAnalyse = wx.Button(id=wxID_FRAME1BTNSAANALYSE,
-              label=u'Analyse', name=u'btnSAAnalyse', parent=self.panel1,
-              pos=wx.Point(128, 384), size=wx.Size(83, 40), style=0)
+              label=u'SA table', name=u'btnSAAnalyse', parent=self.panel1,
+              pos=wx.Point(16, 384), size=wx.Size(96, 32), style=0)
         self.btnSAAnalyse.Bind(wx.EVT_BUTTON, self.OnButton1Button,
-              id=wxID_FRAME1BUTTON1)
+              id=wxID_FRAME1BTNSAANALYSE)
 
         self.btnGMA = wx.Button(id=wxID_FRAME1BTNGMA, label=u'GMA',
               name=u'btnGMA', parent=self.panel1, pos=wx.Point(120, 280),
@@ -389,8 +390,8 @@ class Frame1(wx.Frame):
     def __init__(self, parent):
         self._init_ctrls(parent)
         # load last parameters
-        if 'last_cfg.pkl' in os.listdir(os.getcwd()):
-            with open(os.getcwd()+'\last_cfg.pkl', 'rb') as f:
+        if 'last_cfg.pkl' in os.listdir(sys.path[0]):
+            with open(sys.path[0]+'\last_cfg.pkl', 'rb') as f:
                 cfg = pickle.load(f)
         else:
         # set default parameters
@@ -398,7 +399,7 @@ class Frame1(wx.Frame):
                    S=3, R=0, M=0, number_of_epochs=50, number_of_batches=8,
                    data_proportion=0.25, online_learning='on',
                    data_representation='complex', cost_function='mean_squares',
-                   exact_error_eval=True, file_name=os.getcwd()+'\\01.csv',
+                   exact_error_eval=True, file_name=sys.path[0]+'\\01.csv',
                    hidden_1_range=[3,10], hidden_2_range=[3,15], num_init=5,
                    f=u'', out_dir=u'', train_eval=True)
         # set values in vidgets
@@ -449,7 +450,7 @@ class Frame1(wx.Frame):
     def OnBtnFileButton(self, event):
         dlg = wx.FileDialog(
                 self, message="Choose a file",
-                defaultDir=os.getcwd(),
+                defaultDir=sys.path[0],
                 defaultFile="",
                 style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR
                 )
@@ -512,7 +513,7 @@ class Frame1(wx.Frame):
                    file_name=file_name, hidden_1_range=hidden_1_range,
                    hidden_2_range=hidden_2_range, num_init=num_init, f=f,
                    out_dir=out_dir, train_eval=train_eval)
-        NN_learning.save_cfg(cfg, os.getcwd()+'\last', txt=False)
+        NN_learning.save_cfg(cfg, sys.path[0]+'\last', txt=False)
 
         # Perform learning
         (self.btnLearn.J,
@@ -602,7 +603,7 @@ class Frame1(wx.Frame):
                    file_name=file_name, hidden_1_range=hidden_1_range,
                    hidden_2_range=hidden_2_range, num_init=num_init, f=f,
                    out_dir=out_dir, train_eval=train_eval)
-        NN_learning.save_cfg(cfg, os.getcwd()+'\last', txt=False)
+        NN_learning.save_cfg(cfg, sys.path[0]+'\last', txt=False)
 
         thread.start_new_thread(NN_analysis.full_SA,
                                 (hidden_1_range, hidden_2_range, num_init, epsilon,
@@ -615,7 +616,7 @@ class Frame1(wx.Frame):
 
     def OnBtnSAloadButton(self, event):
         dlg = wx.FileDialog(self, message="Choose a file",
-                            defaultDir=os.getcwd(),
+                            defaultDir=sys.path[0],
                             defaultFile="",
                             style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR)
         if dlg.ShowModal() == wx.ID_OK:
@@ -650,7 +651,7 @@ class Frame1(wx.Frame):
     def OnBtnSAVizualiseButton(self, event):
         # Get file through dialog
         dlg = wx.FileDialog(self, message="Choose a file",
-                            defaultDir=os.getcwd(),
+                            defaultDir=sys.path[0],
                             defaultFile="",
                             style=wx.OPEN | wx.MULTIPLE | wx.CHANGE_DIR)
         if dlg.ShowModal() == wx.ID_OK:
@@ -665,10 +666,10 @@ class Frame1(wx.Frame):
 
 
     def OnButton1Button(self, event):
-        dir = self.txtOutDir.GetValue()
-        if 'SA' in os.listdir(dir)[0]:
-            NN_analysis.fill_table_SA(dir)
+        table_dir = self.txtOutDir.GetValue()
+        NN_analysis.fill_table_SA(str(table_dir))
         event.Skip()
+
 
     def OnBtnGMAButton(self, event):
         # Take parameters:
@@ -718,17 +719,17 @@ class Frame1(wx.Frame):
                    file_name=file_name, hidden_1_range=hidden_1_range,
                    hidden_2_range=hidden_2_range, num_init=num_init, f=f,
                    out_dir=out_dir, train_eval=train_eval)
-        NN_learning.save_cfg(cfg, os.getcwd()+'\last', txt=False)
+        NN_learning.save_cfg(cfg, sys.path[0]+'\last', txt=False)
         # Perform GMA
         theta_list = NN_analysis.GMA(epsilon, alpha, S, R, M, number_of_epochs,
                                                  number_of_batches, data_proportion,
                                                  online_learning, data_representation,
                                                  cost_function, exact_error_eval,
                                                  hidden_1_range, hidden_2_range, num_init,
-                                                 f, out_dir)
+                                                 f, out_dir, self)
         # fill the table
         NN_analysis.fill_table_GMA(theta_list, file_name, S, hidden_1, hidden_2,
-                                   out_dir, f)
+                                   out_dir, str(f))
         event.Skip()
 
 

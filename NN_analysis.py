@@ -242,22 +242,22 @@ def full_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
                 save_SA(out_file, 'test='+str(data_proportion), best_iter, SA, average_theta)
 
 
-def fill_table_SA(dir):
+def fill_table_SA(table_dir):
     """
     Function to fill the final data in the table.
     Takes path to the directory written as string.
-    dir may consist train, test or both data.
+    table_dir may consist train, test or both data.
     """
     # separate files in the categories
-    files = os.listdir(dir)
+    files = os.listdir(table_dir)
     (surf_train, surf_test, theta_train, theta_test) = ([], [], [], [])
     for f in files:
-        if 'SA' in f:
+        if 'surf' in f:
             if f[-5] == '0':
                 surf_train.append(f)
             else:
                 surf_test.append(f)
-        else:
+        elif 'theta' in f:
             if f[-5] == '0':
                 theta_train.append(f)
             else:
@@ -274,7 +274,7 @@ def fill_table_SA(dir):
             # loop over probationers
             for i in xrange(num_prob):
                 # Load surface
-                surf_file = dir+'\\'+t[0][i]
+                surf_file = table_dir+'\\'+t[0][i]
                 loaded_SA = open(surf_file, 'r')
                 SA_surface = pickle.load(loaded_SA)
                 loaded_SA.close()
@@ -285,7 +285,7 @@ def fill_table_SA(dir):
                             min_idx = [q, w]
 
                 # Load theta matrices
-                th_file = dir+'\\'+t[1][i]
+                th_file = table_dir+'\\'+t[1][i]
                 loaded_SA = open(th_file, 'r')
                 SA_theta = pickle.load(loaded_SA)
                 loaded_SA.close()
@@ -313,7 +313,7 @@ def fill_table_SA(dir):
                 T = 'train'
             else:
                 T = 'test'
-            with open(dir+'\\SA_table_'+T+'.csv', "w") as output:
+            with open(table_dir+'\\SA_table_'+T+'.csv', "w") as output:
                 writer = csv.writer(output, lineterminator='\n')
                 writer.writerows(table)
 
@@ -323,7 +323,7 @@ def fill_table_SA(dir):
 def GMA(epsilon, alpha, S, R, M, number_of_epochs, number_of_batches,
         data_proportion, online_learning, data_representation,
         cost_function, exact_error_eval, hidden_1_range, hidden_2_range,
-        num_init, file_dir, out_dir):
+        num_init, file_dir, out_dir, self):
     """
 
     """
@@ -335,7 +335,7 @@ def GMA(epsilon, alpha, S, R, M, number_of_epochs, number_of_batches,
                               number_of_epochs, number_of_batches,
                               data_proportion, online_learning,
                               'large', cost_function,
-                              exact_error_eval, file_dir)
+                              exact_error_eval, file_dir, self)
     # save theta matrices
     f = open(out_dir+'\\GMA_average_theta', 'wb')
     pickle.dump(average_theta, f)
@@ -408,7 +408,6 @@ def fill_table_GMA(theta_list, example_file, S, hidden_1, hidden_2, out_dir, fil
         for v in wVar_list[r]: table[r].append(v)
         for v in wPairVar_list[r]: table[r].append(v)
         for v in actVar_list[r]: table[r].append(v)
-
     with open(out_dir+'\\GMA_table.csv', "w") as output:
         writer = csv.writer(output, lineterminator='\n')
         writer.writerows(table)

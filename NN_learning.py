@@ -143,13 +143,17 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size,
         theta_history[i] = range(3)
 
     #  Create 3 sets of matrices of initial weights according to the given structure.
-    [theta_1, theta_2, theta_relation] = neural_network.initialise_weights(input_size, hidden_1, hidden_2, relation_in_size,
-                                                                           output_size, num_lay_1, num_lay_2, epsilon)
+    [theta_1, theta_2,
+     theta_relation] = neural_network.initialise_weights(input_size, hidden_1, hidden_2,
+                                                         relation_in_size, output_size,
+                                                         num_lay_1, num_lay_2, epsilon)
     # Save original theta matrices
     theta_history[0] = [theta_1, theta_2, theta_relation]
 
     #  Create initial moment for every weight
-    [moment_1, moment_2, moment_relation] = neural_network.initialize_moment(num_lay_1, theta_1, theta_2, theta_relation)
+    [moment_1, moment_2,
+     moment_relation] = neural_network.initialize_moment(num_lay_1, theta_1,
+                                                         theta_2, theta_relation)
 
     for epoch in range(number_of_epochs):  # Beginning of epoch loop
         training_ex_idx = np.random.permutation(training_ex_idx)  # permute indeces of the training examples
@@ -176,9 +180,11 @@ def Learning(alpha, R, S, M, hidden_1, hidden_2, epsilon, batch_size,
                 break
 
             # Compute activations of every unit in the network.
-            [a_1, a_2] = neural_network.forward_propagation(S, len(item_input), num_lay_1, num_lay_2,
+            [a_1, a_2] = neural_network.forward_propagation(S, len(item_input),
+                                                            num_lay_1, num_lay_2,
                                                             item_input, rel_input,
-                                                            theta_1, theta_2, theta_relation)
+                                                            theta_1, theta_2,
+                                                            theta_relation)
             # Compute average error with regularization (training)
             J[epoch * number_of_batches + batch] = \
             neural_network.compute_cost_function(cost_function, len(item_input), a_2,

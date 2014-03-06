@@ -895,7 +895,10 @@ def wPairVAr(theta):
 
 def actVar(S, hidden_1, hidden_2, file_name, theta_1, theta_2, theta_relation):
     """ Returns mean variance for every layer over all learning examples."""
-    [item, rel, attr] = complex_data_preparation(file_name)
+    if file_name[-3:] == 'csv':
+        [item, rel, attr] = complex_data_preparation(file_name)
+    elif file_name[-3:] == 'xls':
+        [item, rel, attr] = data_preparation_xls(file_name, 'complex')
     input_size = np.size(item, 1)  # Item number
     relation_in_size = np.size(rel, 1)  # Relations number
     output_size = 48                    # Number of attributes
