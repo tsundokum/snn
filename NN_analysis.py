@@ -84,6 +84,7 @@ def StrAn(alpha, R, S, M, epsilon, batch_size, number_of_epochs, number_of_batch
             Iterations = []
             # Loop over the random initializations
             for init in range(num_init):
+                print 'init = '+str(init)
                 [J, J_test,
                  theta_history] = NN_learning.Learning(alpha, R, S, M,
                                                        hidden_1, hidden_2,
@@ -109,6 +110,7 @@ def StrAn(alpha, R, S, M, epsilon, batch_size, number_of_epochs, number_of_batch
                     theta_accumulator[1][0] += theta_history[-1][1][0]
                     theta_accumulator[1][1] += theta_history[-1][1][1]
                     theta_accumulator[2] += theta_history[-1][2]
+                del J, J_test, theta_history  # free memory
 
             r_idx = hidden_1[0] - hidden_1_range[0]
             c_idx = hidden_2[0] - hidden_2_range[0]
@@ -346,6 +348,7 @@ def GMA(epsilon, alpha, S, R, M, number_of_epochs, number_of_batches,
     data_representation = 'complex'
     theta_list = []  # list to store theta matrices for every probationer
     for prob in os.listdir(file_dir):
+        print os.listdir(file_dir).index(prob)
         # prepare data form file
         [batch_size,
          number_of_batches,
