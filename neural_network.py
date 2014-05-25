@@ -143,6 +143,62 @@ def data_preparation_xls(file_name, data_representation):
 
 
 # Function to prepare full(complex) training examples
+def data_preparation_csv(file_name, data_representation):
+    """
+    Prepare learning data from given csv-file (comma separated).
+    ((Represent data in 16 examples))
+    Takes file name written as string.
+    Returns matrixes in format: number of examples by number of dimensions.
+    Returns:
+        ----
+        item: learning matrix for items (array)
+        rel: learning matrix for ralations (array)
+        attr: learning matrix for attributes (array)
+
+    """
+    # Extract data from file as list of strings
+    infile = open(file_name, 'r')
+    table = []
+    for row in csv.reader(infile):
+        table.append(row)
+    infile.close()
+    table = np.array(table, dtype='float32')
+    nof_ex = len(table)
+    nof_items = int(np.max(table[:,0])) + 1
+    nof_relations = int(np.max(table[:,1])) + 1
+
+    if data_representation == 'complex':
+        nof_attributes = int(np.max(table[:,2])) + 1
+        nof_rows = nof_items * nof_relations
+        attributes = np.zeros((nof_rows, nof_attributes))
+        items = np.zeros((nof_rows, nof_items))
+        relations = np.zeros((nof_rows, nof_items))
+        for it in xrange(nof_items):
+            by_item = table[table[:,0] == it]
+            items[it*nof_items : (it+1)*nof_items, it] = 1
+            for rel in xrange(nof_relations):
+                by_item_rel = by_item[by_item[:,1] == rel]
+                relations[it*nof_relations + rel, rel] = 1
+                for attr in xrange(len(by_item_rel)):
+                    cur_row = it * nof_relations + rel
+                    attributes[cur_row, int(by_item_rel[attr,2])] = by_item_rel[attr,3]
+
+        return items, relations, attributes
+
+    elif data_representation == 'separate':
+        items = np.zeros((nof_ex, nof_items))
+        relations = np.zeros((nof_ex, nof_relations))
+        for i in xrange(nof_ex):
+            items[i, int(table[i,0])] = 1
+            relations[i, int(table[i,1])] = 1
+        attr_num = np.array(table[:,2], dtype='int8').reshape(nof_ex, 1)
+        attr_val = np.array(table[:,3], dtype='float32').reshape(nof_ex, 1)
+
+        return items, relations, attr_num, attr_val
+
+
+
+# Function to prepare full(complex) training examples
 def complex_data_preparation(file):
     """
     Prepare learning data from given csv-file (comma separated).
@@ -312,7 +368,7 @@ def big_data_preparation(file_dir):
     full_attr = []
     for f in os.listdir(file_dir):
         if f[-3:] == 'csv':
-            [item, rel, attr] = complex_data_preparation(file_dir+'\\'+f)
+            [item, rel, attr] = data_preparation_csv(file_dir+'\\'+f, 'complex')
         elif f[-3:] == 'xls':
             [item, rel, attr] = data_preparation_xls(file_dir+'\\'+f, 'complex')
         full_item.append(item)
@@ -862,6 +918,68 @@ def check_result(example, epoch, file_name, hidden_1, hidden_2, theta_history, S
     return '\n'.join(check_result)
 
 
+def check_result_new(example, epoch, file_name, hidden_1, hidden_2, theta_history, S):
+    """
+    Takes one example from learning data(example) and learned weight matrices
+    from theta_hisory according to the particular epoch of learning.
+    Print output values of the network(res) with respect to attributes(attr_names)
+    and original values(teacher).
+    """
+    # Import data
+    if file_name[-4:] == '.xls':
+        [item, rel, attr] = data_preparation_xls(file_name, 'complex')
+    elif file_name[-4:] == '.csv':
+        [item, rel, attr] = data_preparation_csv(file_name, 'complex')
+    # Assign local variables
+    [theta_1, theta_2, theta_relation] = theta_history[epoch]
+    num_lay_1 = len(hidden_1)
+    num_lay_2 = len(hidden_2)
+    m = 1
+    # Set data
+    X = item[example]
+    input_relation = rel[example]
+    Y = attr[example]
+    # Recognize item input
+    if (X == [1,0,0,0]).all():
+        object = u'Фура'
+    elif (X == [0,1,0,0]).all():
+        object = u'Сабля'
+    elif (X == [0,0,1,0]).all():
+        object = u'Ваня'
+    elif (X == [0,0,0,1]).all():
+        object = u'Шубин'
+    # Recognize relation input
+    if (input_relation == [1,0,0,0]).all():
+        relation = 'moget'
+    elif (input_relation == [0,1,0,0]).all():
+        relation = 'imeet'
+    elif (input_relation == [0,0,1,0]).all():
+        relation = 'yavlyaetsya'
+    elif (input_relation == [0,0,0,1]).all():
+        relation = 'kakoy'
+
+    # Compute activations of every unit in the network.
+    [a_1, a_2] = forward_propagation(S, m, num_lay_1, num_lay_2,
+                                                    X.reshape(1,4), input_relation.reshape(1,4), theta_1,
+                                                    theta_2, theta_relation)
+
+    # List of attribute names
+    st_types = pd.read_csv("c:\\SNN\\ERP_processing\\st_types.csv", sep=',')
+    print st_types.columns
+    attr_names = list(st_types[u'attribute'])
+    # transform arrays in lists
+    res = []
+    for i in xrange(np.size((a_2[-1]))):
+        res.append(a_2[-1][0][i])
+    teacher = []
+    check_result = []
+    for i in xrange(np.size((Y))):
+        teacher.append(Y[i])
+    for i in xrange(len(attr_names)):
+        check_result.append(object+' '+relation+' '+attr_names[i]+':  '+str(res[i])+' ('+str(teacher[i])+')')
+    return '\n'.join(check_result)
+
+
 
 # ANALYTICAL FUNCTIONS:
 
@@ -892,16 +1010,33 @@ def wPairVAr(theta):
         totalVar = np.sum(variance)  # compute sum
         return totalVar
 
-
-def actVar(S, hidden_1, hidden_2, file_name, theta_1, theta_2, theta_relation):
-    """ Returns mean variance for every layer over all learning examples."""
+def comp_activations(S, hidden_1, hidden_2, file_name,
+                     theta_1, theta_2, theta_relation):
+    """Compute activations of every neuron with given weight matrices"""
     if file_name[-3:] == 'csv':
-        [item, rel, attr] = complex_data_preparation(file_name)
+        [item, rel, attr] = data_preparation_csv(file_name, 'complex')
     elif file_name[-3:] == 'xls':
         [item, rel, attr] = data_preparation_xls(file_name, 'complex')
     input_size = np.size(item, 1)  # Item number
     relation_in_size = np.size(rel, 1)  # Relations number
-    output_size = 48                    # Number of attributes
+    num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
+    num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
+    batch_size = len(item)
+    m = batch_size    # change "m" for batch_size
+    [a_1, a_2] = forward_propagation(S, m, num_lay_1, num_lay_2, item, rel,
+                                     theta_1, theta_2, theta_relation)
+
+    return a_1, a_2
+
+
+def actVar(S, hidden_1, hidden_2, file_name, theta_1, theta_2, theta_relation):
+    """ Returns mean variance for every layer over all learning examples."""
+    if file_name[-3:] == 'csv':
+        [item, rel, attr] = data_preparation_csv(file_name, 'complex')
+    elif file_name[-3:] == 'xls':
+        [item, rel, attr] = data_preparation_xls(file_name, 'complex')
+    input_size = np.size(item, 1)  # Item number
+    relation_in_size = np.size(rel, 1)  # Relations number
     num_lay_1 = len(hidden_1)           # Number of layers in the first subnetwork
     num_lay_2 = len(hidden_2)           # Number of layers in the second subnetwork
     batch_size = len(item)

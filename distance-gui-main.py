@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+import os
+import csv
+import codecs
 from Tkinter import *
 import tkMessageBox
 import tkFont
-from createpropositions import read_all_propositions
+##from createpropositions import read_all_propositions
 import random
 
 BUTTON_NEXT_TEXT = 'Дальше'
@@ -12,8 +14,9 @@ MAIN_WINDOW_TITLE = " "
 LABEL_DEFAULT_TEXT = " "
 BUTTON_START_TEXT = "Начинаем!"
 FINISH_MESSAGE = "Эксперимент окончен. Спасибо!"
+path = os.getcwd()
 
-random.seed(113)
+##random.seed(113)
 
 proposition_words_file = 'resources/RogersMcClelland08_ru.json'
 words_output_file = 'resources/test-distances.csv'
@@ -22,7 +25,14 @@ SCALER_DEFAULT_VALUE = 0
 
 
 def generate_and_shuffle_propositions_generator():
-    props = read_all_propositions(proposition_words_file)
+##    props = read_all_propositions(proposition_words_file)
+    # load propositions from prepared csv
+    props = []
+    with codecs.open(path  + '\\resources\\all_triads.csv', 'rb', 'cp1251') as infile:
+        for line in infile:
+            row = tuple(line.split(',')[:-1])
+            props.append(row)
+
     random.shuffle(props)
 
     for i, prop in enumerate(props):
