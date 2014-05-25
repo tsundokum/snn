@@ -184,6 +184,7 @@ def full_SA(hidden_1_range, hidden_2_range, num_init, epsilon, alpha, S, R, M,
     if (data_proportion == 0) and (train_eval == True):  # exaption for wrong parameters
         train_eval = False
     if os.path.isfile(file_dir):  # if file given
+        f = file_dir
         out_file = out_dir+f[f.rfind('\\'):][:-4]
         if train_eval == True:  # in case of additional train-only evaluation
             for d in [0, data_proportion]:  # preform SA without test and with test il loop
